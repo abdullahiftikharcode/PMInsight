@@ -1,6 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { apiService, type StandardDetail, type SearchResult, type Section } from '../services/api';
+import { apiService, type StandardDetail, type SearchResult } from '../services/api';
+import { 
+  FaSearch, 
+  FaBook, 
+  FaBookmark, 
+  FaHome,
+  FaArrowLeft,
+  FaExclamationTriangle,
+  FaList,
+  FaEye,
+  FaChevronLeft,
+  FaChevronRight,
+  FaCog,
+  FaUsers,
+  FaRocket,
+  FaChartBar,
+  FaTimes
+} from 'react-icons/fa';
 
 const StandardReaderView = () => {
   const { id } = useParams<{ id: string }>();
@@ -8,15 +25,11 @@ const StandardReaderView = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sectionsPerPage, setSectionsPerPage] = useState(10);
-  const [tocPage, setTocPage] = useState(1);
-  const [tocPerPage, setTocPerPage] = useState(20);
-  const [allSections, setAllSections] = useState<Section[]>([]);
+  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [paginationLoading, setPaginationLoading] = useState(false);
 
   useEffect(() => {
     const fetchStandard = async () => {
@@ -24,8 +37,13 @@ const StandardReaderView = () => {
       
       try {
         setLoading(true);
-        const data = await apiService.getStandard(parseInt(id), currentPage, sectionsPerPage);
-        setStandard(data);
+        setError(null);
+        const standardData = await apiService.getStandard(parseInt(id));
+        if (standardData) {
+          setStandard(standardData);
+        } else {
+          setError('Standard not found');
+        }
       } catch (err) {
         setError('Failed to load standard. Please try again.');
         console.error('Error fetching standard:', err);
@@ -35,137 +53,61 @@ const StandardReaderView = () => {
     };
 
     fetchStandard();
-  }, [id, currentPage, sectionsPerPage]);
-
-  // Fetch all sections for table of contents
-  useEffect(() => {
-    const fetchAllSections = async () => {
-      if (!id) return;
-      
-      try {
-        // Fetch all sections with a large limit
-        const data = await apiService.getStandard(parseInt(id), 1, 1000);
-        setAllSections(data.sections);
-      } catch (err) {
-        console.error('Error fetching all sections:', err);
-      }
-    };
-
-    fetchAllSections();
   }, [id]);
-
-  // Load bookmarks from localStorage
-  useEffect(() => {
-    const savedBookmarks = localStorage.getItem(`bookmarks-${id}`);
-    if (savedBookmarks) {
-      setBookmarks(new Set(JSON.parse(savedBookmarks)));
-    }
-  }, [id]);
-
-  // Save bookmarks to localStorage
-  useEffect(() => {
-    if (bookmarks.size > 0) {
-      localStorage.setItem(`bookmarks-${id}`, JSON.stringify([...bookmarks]));
-    }
-  }, [bookmarks, id]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim() || !id) return;
 
     try {
-      setSearching(true);
-      const response = await fetch(`http://localhost:3001/api/standards/${id}/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: searchQuery, limit: 10 }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-      
-      const data = await response.json();
-      setSearchResults(data.results);
+      setSearchLoading(true);
+      const results = await apiService.searchStandard(parseInt(id), searchQuery);
+      setSearchResults(results);
+      setShowSearchResults(true);
     } catch (err) {
       console.error('Search error:', err);
-      setSearchResults([]);
+      setError('Search failed. Please try again.');
     } finally {
-      setSearching(false);
+      setSearchLoading(false);
     }
   };
 
-  const navigateToSection = (sectionId: number) => {
-    window.location.href = `/section/${sectionId}`;
+  const clearSearch = () => {
+    setShowSearchResults(false);
+    setSearchResults([]);
+    setSearchQuery('');
   };
 
   const toggleBookmark = (sectionId: number) => {
-    const newBookmarks = new Set(bookmarks);
-    if (newBookmarks.has(sectionId)) {
-      newBookmarks.delete(sectionId);
-    } else {
-      newBookmarks.add(sectionId);
-    }
-    setBookmarks(newBookmarks);
-  };
-
-  // Get paginated sections for table of contents
-  const getPaginatedTocSections = () => {
-    if (allSections.length === 0) return [];
-    const startIndex = (tocPage - 1) * tocPerPage;
-    const endIndex = startIndex + tocPerPage;
-    return allSections.slice(startIndex, endIndex);
-  };
-
-  // Calculate TOC pagination info
-  const getTocPaginationInfo = () => {
-    if (allSections.length === 0) return null;
-    const totalSections = allSections.length;
-    const totalPages = Math.ceil(totalSections / tocPerPage);
-    return {
-      currentPage: tocPage,
-      totalPages,
-      totalSections,
-      hasNextPage: tocPage < totalPages,
-      hasPrevPage: tocPage > 1,
-    };
-  };
-
-  // Intersection Observer for active section tracking
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    standard?.sections.forEach((section) => {
-      const element = document.getElementById(section.anchorId);
-      if (element) {
-        observer.observe(element);
+    setBookmarks(prev => {
+      const newBookmarks = new Set(prev);
+      const sectionIdStr = sectionId.toString();
+      if (newBookmarks.has(sectionIdStr)) {
+        newBookmarks.delete(sectionIdStr);
+      } else {
+        newBookmarks.add(sectionIdStr);
       }
+      return newBookmarks;
     });
-
-    return () => observer.disconnect();
-  }, [standard]);
+  };
 
   if (loading) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-animated">
-        <div className="text-center glass-card p-5 rounded-4">
-          <div className="loading-spinner mx-auto mb-4"></div>
-          <p className="h4 gradient-text fw-semibold mb-4">Loading Standard...</p>
-          <div className="bouncing-dots">
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
+      <div className="reddit-layout">
+        <div className="reddit-sidebar">
+          <div className="reddit-sidebar-section">
+            <div className="reddit-nav-brand">
+              <FaRocket />
+              PMInsight
+            </div>
+          </div>
+        </div>
+        <div className="reddit-main">
+          <div className="reddit-content">
+            <div className="reddit-loading">
+              <div className="reddit-spinner"></div>
+              <p>Loading standard...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -174,442 +116,434 @@ const StandardReaderView = () => {
 
   if (error || !standard) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-animated">
-        <div className="text-center glass-card p-5 rounded-4" style={{maxWidth: '400px'}}>
-          <div className="display-1 mb-4 text-danger">⚠️</div>
-          <h1 className="h2 fw-bold gradient-text mb-4">Error</h1>
-          <p className="text-white-80 mb-4">{error || 'Standard not found'}</p>
-          <Link to="/" className="btn btn-primary hover-lift d-flex align-items-center mx-auto">
-            <svg className="me-2" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Dashboard
-          </Link>
+      <div className="reddit-layout">
+        <div className="reddit-sidebar">
+          <div className="reddit-sidebar-section">
+            <div className="reddit-nav-brand">
+              <FaRocket />
+              PMInsight
+            </div>
+          </div>
+        </div>
+        <div className="reddit-main">
+          <div className="reddit-content">
+            <div className="reddit-error">
+              <FaExclamationTriangle className="reddit-error-icon" />
+              <h2 className="h3 fw-bold reddit-text-primary mb-3">Error</h2>
+              <p className="reddit-text-secondary mb-4">{error || 'Standard not found'}</p>
+              <Link to="/standards" className="btn-reddit">
+                <FaArrowLeft className="me-2" />
+                Back to Standards
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-vh-100 bg-animated position-relative">
-      {/* Floating Background Orbs */}
-      <div className="floating-orbs">
-        <div className="orb orb-1"></div>
-        <div className="orb orb-2"></div>
-        <div className="orb orb-3"></div>
-      </div>
-
-      {/* Header */}
-      <header className="header-glass position-sticky" style={{top: 0, zIndex: 10}}>
-        <div className="container">
-          <div className="row align-items-center py-4">
-            <div className="col-md-8">
-              <div className="d-flex align-items-center gap-3">
-                <Link to="/" className="text-info text-decoration-none">
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                </Link>
-                <div>
-                  <h1 className="h3 fw-bold text-white mb-0">{standard.title}</h1>
-                  <p className="text-white-70 small mb-0">{standard.sections.length} sections</p>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-4 text-end">
-              <div className="d-flex align-items-center gap-3">
-                <div className="status-indicator">
-                  <div className="status-dot blue"></div>
-                  <span className="text-white-90 fw-medium">Standard Reader</span>
-                </div>
-                {standard?.pagination && (
-                  <div className="text-white-70 small">
-                    Page {standard.pagination.currentPage} of {standard.pagination.totalPages}
-                  </div>
-                )}
-              </div>
-            </div>
+    <div className="reddit-layout">
+      {/* Reddit-Style Sidebar */}
+      <div className="reddit-sidebar" style={{overflowY: 'auto', height: '100vh'}}>
+        <div className="reddit-sidebar-section">
+          <div className="reddit-nav-brand">
+            <FaRocket />
+            PMInsight
           </div>
         </div>
-      </header>
+        
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Navigation</div>
+          <Link to="/" className="reddit-sidebar-link">
+            <FaHome className="me-2" />
+            Home
+          </Link>
+          <Link to="/standards" className="reddit-sidebar-link">
+            <FaBook className="me-2" />
+            Standards
+          </Link>
+          <Link to="/insights" className="reddit-sidebar-link">
+            <FaChartBar className="me-2" />
+            Analytics
+          </Link>
+        </div>
 
-      <main className="position-relative" style={{zIndex: 10}}>
-        <div className="container py-5">
-          <div className="row g-4">
-            {/* Sidebar */}
-            <div className="col-lg-3">
-              <div className="position-sticky" style={{top: '100px'}}>
-                {/* Simple Search */}
-                <div className="card mb-4">
-                  <div className="card-content">
-                    <h3 className="h5 fw-semibold text-white mb-4">Search</h3>
-                    <form onSubmit={handleSearch}>
-                      <div className="mb-3">
-                        <input
-                          type="text"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Search sections..."
-                          className="form-control"
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={searching || !searchQuery.trim()}
-                        className="btn btn-primary w-100"
-                      >
-                        {searching ? 'Searching...' : 'Search'}
-                      </button>
-                    </form>
-                    
-                    {/* Simple Search Results */}
-                    {searchResults.length > 0 && (
-                      <div className="mt-4">
-                        <h4 className="h6 fw-semibold text-white mb-3">
-                          Found {searchResults.length} results:
-                        </h4>
-                        <div className="d-flex flex-column gap-2">
-                          {searchResults.map((result) => (
-                            <div key={result.id} className="border border-info rounded p-3">
-                              <button
-                                onClick={() => navigateToSection(result.id)}
-                                className="btn btn-link text-start p-0 w-100 text-decoration-none"
-                              >
-                                <div className="small text-white fw-medium">
-                                  {result.sectionNumber} {result.title}
-                                </div>
-                                <div className="small text-white-70 d-flex justify-content-between align-items-center mt-1">
-                                  <span>Match: {Math.round(result.similarity * 100)}%</span>
-                                  <span className="badge bg-info text-dark">
-                                    {Math.round(result.similarity * 100)}%
-                                  </span>
-                                </div>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Table of Contents */}
-                <div className="card mb-4">
-                  <div className="card-content">
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                      <h3 className="h5 fw-semibold text-white mb-0">Table of Contents</h3>
-                      {getTocPaginationInfo() && (
-                        <div className="d-flex align-items-center gap-2">
-                          <select 
-                            value={tocPerPage} 
-                            onChange={(e) => {
-                              setTocPerPage(parseInt(e.target.value));
-                              setTocPage(1);
-                            }}
-                            className="form-select form-select-sm"
-                            style={{width: 'auto'}}
-                          >
-                            <option value={10}>10</option>
-                            <option value={20}>20</option>
-                            <option value={50}>50</option>
-                            <option value={100}>100</option>
-                          </select>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <nav className="d-flex flex-column gap-2">
-                      {allSections.length === 0 ? (
-                        <div className="text-center text-white-70 small py-3">
-                          Loading table of contents...
-                        </div>
-                      ) : (
-                        getPaginatedTocSections().map((section) => (
-                        <div
-                          key={section.id}
-                          className={`border border-white-20 rounded p-3 ${
-                            activeSection === section.anchorId ? 'bg-primary-20' : ''
-                          }`}
-                        >
-                          <div className="d-flex justify-content-between align-items-center">
-                            <button
-                              onClick={() => navigateToSection(section.id)}
-                              className="btn btn-link text-start p-0 w-100 text-decoration-none"
-                            >
-                              <span className="small text-white">{section.sectionNumber} {section.title}</span>
-                            </button>
-                            <button
-                              onClick={() => toggleBookmark(section.id)}
-                              className="btn btn-sm p-1 ms-2"
-                              title={bookmarks.has(section.id) ? 'Remove bookmark' : 'Add bookmark'}
-                            >
-                              {bookmarks.has(section.id) ? (
-                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
-                                </svg>
-                              ) : (
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-                                </svg>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                        ))
-                      )}
-                    </nav>
-
-                    {/* TOC Pagination Controls */}
-                    {getTocPaginationInfo() && (
-                      <div className="mt-4 pt-3 border-top border-white-20">
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div className="text-white-70 small">
-                            Showing {((tocPage - 1) * tocPerPage) + 1} to {Math.min(tocPage * tocPerPage, getTocPaginationInfo()!.totalSections)} of {getTocPaginationInfo()!.totalSections}
-                          </div>
-                          
-                          <div className="d-flex align-items-center gap-1">
-                            <button
-                              onClick={() => setTocPage(1)}
-                              disabled={!getTocPaginationInfo()!.hasPrevPage}
-                              className="btn btn-outline-light btn-sm"
-                              title="First page"
-                            >
-                              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => setTocPage(tocPage - 1)}
-                              disabled={!getTocPaginationInfo()!.hasPrevPage}
-                              className="btn btn-outline-light btn-sm"
-                              title="Previous page"
-                            >
-                              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/>
-                              </svg>
-                            </button>
-                            
-                            <span className="text-white-70 small px-2">
-                              {tocPage}/{getTocPaginationInfo()!.totalPages}
-                            </span>
-                            
-                            <button
-                              onClick={() => setTocPage(tocPage + 1)}
-                              disabled={!getTocPaginationInfo()!.hasNextPage}
-                              className="btn btn-outline-light btn-sm"
-                              title="Next page"
-                            >
-                              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => setTocPage(getTocPaginationInfo()!.totalPages)}
-                              disabled={!getTocPaginationInfo()!.hasNextPage}
-                              className="btn btn-outline-light btn-sm"
-                              title="Last page"
-                            >
-                              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Search Results */}
-
-                {/* Bookmarks */}
-                {bookmarks.size > 0 && (
-                  <div className="card">
-                    <div className="card-content">
-                      <h3 className="h5 fw-semibold text-white mb-4">Bookmarks</h3>
-                      <div className="d-flex flex-column gap-2">
-                        {standard.sections
-                          .filter(section => bookmarks.has(section.id))
-                          .map((section) => (
-                            <div key={section.id} className="border border-info rounded p-3">
-                              <div className="d-flex justify-content-between align-items-center">
-                                <button
-                                  onClick={() => navigateToSection(section.id)}
-                                  className="btn btn-link text-start p-0 w-100 text-decoration-none"
-                                >
-                                  <span className="small text-white">{section.sectionNumber} {section.title}</span>
-                                </button>
-                                <button
-                                  onClick={() => toggleBookmark(section.id)}
-                                  className="btn btn-sm p-1 ms-2 text-danger"
-                                  title="Remove bookmark"
-                                >
-                                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                                  </svg>
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Main Content - Blog Style */}
-            <div className="col-lg-9">
-              <div className="d-flex flex-column gap-3">
-                {standard.sections.map((section) => (
-                  <article
-                    key={section.id}
-                    id={section.anchorId}
-                    className="card"
-                    style={{transition: 'transform 0.2s ease, box-shadow 0.2s ease'}}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  >
-                    <div className="card-content">
-                      <div className="d-flex justify-content-between align-items-start mb-3">
-                        <div className="flex-grow-1">
-                          <Link 
-                            to={`/section/${section.id}`}
-                            className="text-decoration-none"
-                          >
-                            <h2 className="h5 fw-bold text-white mb-2 hover-text-primary">
-                              {section.sectionNumber} {section.title}
-                            </h2>
-                          </Link>
-                          <div className="text-white-70 small mb-2">
-                            Section ID: {section.anchorId}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => toggleBookmark(section.id)}
-                          className="btn btn-outline-light btn-sm"
-                          title={bookmarks.has(section.id) ? 'Remove bookmark' : 'Add bookmark'}
-                        >
-                          {bookmarks.has(section.id) ? (
-                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
-                            </svg>
-                          ) : (
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                      
-                      {/* Truncated Content Preview */}
-                      <div className="text-white-80">
-                        <p className="mb-2">
-                          {section.content.length > 200 
-                            ? `${section.content.substring(0, 200)}...` 
-                            : section.content
-                          }
-                        </p>
-                        <Link 
-                          to={`/section/${section.id}`}
-                          className="btn btn-outline-primary btn-sm"
-                        >
-                          Read More
-                          <svg className="ms-1" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </Link>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-
-              {/* Pagination Controls */}
-              {standard.pagination && (
-                <div className="card mt-4">
-                  <div className="card-content">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div className="d-flex align-items-center gap-3">
-                        <span className="text-white-70 small">
-                          Showing {((standard.pagination.currentPage - 1) * sectionsPerPage) + 1} to {Math.min(standard.pagination.currentPage * sectionsPerPage, standard.pagination.totalSections)} of {standard.pagination.totalSections} sections
-                        </span>
-                        <div className="d-flex align-items-center gap-2">
-                          <label className="text-white-70 small">Per page:</label>
-                          <select 
-                            value={sectionsPerPage} 
-                            onChange={(e) => {
-                              setSectionsPerPage(parseInt(e.target.value));
-                              setCurrentPage(1);
-                            }}
-                            className="form-select form-select-sm"
-                            style={{width: 'auto'}}
-                          >
-                            <option value={5}>5</option>
-                            <option value={10}>10</option>
-                            <option value={20}>20</option>
-                            <option value={50}>50</option>
-                          </select>
-                        </div>
-                      </div>
-                      
-                      <div className="d-flex align-items-center gap-2">
-                        <button
-                          onClick={() => setCurrentPage(1)}
-                          disabled={!standard.pagination.hasPrevPage}
-                          className="btn btn-outline-light btn-sm"
-                        >
-                          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => setCurrentPage(currentPage - 1)}
-                          disabled={!standard.pagination?.hasPrevPage}
-                          className="btn btn-outline-light btn-sm"
-                        >
-                          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/>
-                          </svg>
-                        </button>
-                        
-                        <span className="text-white-70 small px-3">
-                          Page {standard.pagination?.currentPage || 1} of {standard.pagination?.totalPages || 1}
-                        </span>
-                        
-                        <button
-                          onClick={() => setCurrentPage(currentPage + 1)}
-                          disabled={!standard.pagination?.hasNextPage}
-                          className="btn btn-outline-light btn-sm"
-                        >
-                          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => setCurrentPage(standard.pagination?.totalPages || 1)}
-                          disabled={!standard.pagination?.hasNextPage}
-                          className="btn btn-outline-light btn-sm"
-                        >
-                          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Search</div>
+          <form onSubmit={handleSearch} className="reddit-search">
+            <div className="position-relative">
+              <FaSearch className="reddit-search-icon" />
+              <input
+                type="text"
+                className="reddit-search-input"
+                placeholder="Search sections..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                disabled={searchLoading}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="position-absolute end-0 top-50 translate-middle-y border-0 bg-transparent me-2"
+                  style={{ zIndex: 10 }}
+                >
+                  <FaTimes className="text-muted" />
+                </button>
               )}
             </div>
+            {searchLoading && (
+              <div className="text-center mt-2">
+                <div className="spinner-border spinner-border-sm text-primary" role="status">
+                  <span className="visually-hidden">Searching...</span>
+                </div>
+              </div>
+            )}
+          </form>
+          {showSearchResults && (
+            <div className="mt-2">
+              <button
+                onClick={clearSearch}
+                className="btn btn-outline-secondary btn-sm w-100"
+              >
+                <FaTimes className="me-1" />
+                Clear Search ({searchResults.length} results)
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Table of Contents</div>
+          <div className="reddit-sidebar-link">
+            <FaList className="me-2" />
+            {standard.sections.length} sections
+          </div>
+          <div style={{maxHeight: '400px', overflowY: 'auto'}}>
+            {standard.sections.map((section) => (
+              <div key={section.id} className="reddit-list-item">
+                <div className="reddit-list-item-content">
+                  <div className="reddit-list-item-title" style={{
+                    fontSize: '0.875rem',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}>
+                    {section.sectionNumber} {section.title}
+                  </div>
+                  <div className="reddit-list-item-description" style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}>
+                    {section.content.substring(0, 80)}...
+                  </div>
+                </div>
+                <button
+                  onClick={() => toggleBookmark(section.id)}
+                  className="btn btn-sm p-1 flex-shrink-0"
+                  title={bookmarks.has(section.id.toString()) ? 'Remove bookmark' : 'Add bookmark'}
+                >
+                  <FaBookmark className={bookmarks.has(section.id.toString()) ? 'text-warning' : 'text-muted'} />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
-      </main>
+                          
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Tools</div>
+          <div className="reddit-sidebar-link">
+            <FaCog className="me-2" />
+            Settings
+          </div>
+          <div className="reddit-sidebar-link">
+            <FaUsers className="me-2" />
+            Community
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="reddit-main">
+        <div className="reddit-nav">
+          <div className="container d-flex justify-content-between align-items-center">
+            <div className="d-flex align-items-center">
+              <Link to="/standards" className="btn-reddit-outline btn-sm me-3">
+                <FaArrowLeft className="me-1" />
+                Back
+              </Link>
+              <div>
+                <h1 className="h4 fw-bold reddit-text-primary mb-0">
+                  {standard.title}
+                </h1>
+                <p className="reddit-text-secondary mb-0">
+                  {showSearchResults 
+                    ? `${searchResults.length} search results for "${searchQuery}"`
+                    : `${standard.sections.length} sections`
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="reddit-nav-links">
+              <Link to="/" className="reddit-nav-link">
+                <FaHome className="me-1" />
+                Home
+              </Link>
+              <Link to="/insights" className="reddit-nav-link">
+                <FaChartBar className="me-1" />
+                Insights
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className={`reddit-content ${paginationLoading ? 'loading' : ''}`}>
+          {/* Search Results */}
+          {showSearchResults && (
+            <div className="reddit-card reddit-fade-in mb-4">
+              <div className="reddit-card-header">
+                <h3 className="h5 fw-bold reddit-text-primary mb-0">
+                  Search Results ({searchResults.length})
+                </h3>
+                <button
+                  onClick={clearSearch}
+                  className="btn-reddit-outline btn-sm"
+                >
+                  <FaTimes className="me-1" />
+                  Clear Search
+                </button>
+              </div>
+              <div className="reddit-card-body">
+                {searchResults.length > 0 ? (
+                  <div className="row g-3">
+                    {searchResults.map((result, index) => (
+                      <div key={result.id} className="col-12">
+                        <div className="reddit-card reddit-fade-in" 
+                             style={{
+                               animationDelay: `${index * 0.1}s`,
+                               height: '200px' // Fixed height for consistency
+                             }}>
+                          <Link 
+                            to={`/section/${result.id}`}
+                            className="text-decoration-none h-100 d-block"
+                            style={{color: 'inherit'}}
+                          >
+                            <div className="reddit-card-body d-flex flex-column h-100 p-3">
+                              {/* Header Section - Fixed height */}
+                              <div className="d-flex justify-content-between align-items-start mb-2" 
+                                   style={{minHeight: '45px'}}>
+                                <div className="flex-grow-1 me-3">
+                                  <h4 className="h6 fw-bold reddit-text-primary mb-1" 
+                                      style={{
+                                        fontSize: '0.95rem',
+                                        lineHeight: '1.3',
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: 'vertical',
+                                        overflow: 'hidden',
+                                        maxHeight: '2.6rem'
+                                      }}>
+                                    {result.sectionNumber} {result.title}
+                                  </h4>
+                                  <div className="reddit-text-muted" style={{fontSize: '0.75rem'}}>
+                                    Section ID: {result.anchorId}
+                                  </div>
+                                </div>
+                                <div className="text-end flex-shrink-0">
+                                  <span className="badge bg-primary" style={{fontSize: '0.7rem'}}>
+                                    {(result.similarity * 100).toFixed(1)}% match
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {/* Content Section - Flexible height */}
+                              <div className="reddit-text-secondary flex-grow-1 mb-2">
+                                <p style={{
+                                  fontSize: '0.85rem',
+                                  lineHeight: '1.4',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 3,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                  margin: 0
+                                }}>
+                                  {result.content}
+                                </p>
+                              </div>
+                              
+                              {/* Footer Section - Fixed height */}
+                              <div className="d-flex justify-content-between align-items-center mt-auto pt-2 border-top" 
+                                   style={{minHeight: '32px'}}>
+                                <div className="reddit-text-muted" style={{fontSize: '0.75rem'}}>
+                                  <strong>Similarity:</strong> {(result.similarity * 100).toFixed(1)}%
+                                </div>
+                                <div className="btn-reddit btn-sm" style={{fontSize: '0.8rem', padding: '4px 8px'}}>
+                                  <FaEye className="me-1" style={{fontSize: '0.7rem'}} />
+                                  View Section
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <FaSearch className="display-4 reddit-text-muted mb-3" />
+                    <h4 className="reddit-text-primary">No results found</h4>
+                    <p className="reddit-text-secondary">Try different keywords or check your spelling.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Sections List */}
+          {!showSearchResults && (
+            <div className="row g-4">
+              {standard.sections.map((section, index) => (
+                <div key={section.id} className="col-12">
+                  <div className="reddit-card section-card reddit-fade-in" 
+                       style={{
+                         animationDelay: `${index * 0.1}s`,
+                         height: '200px' // Fixed height matching search results
+                       }}>
+                    <Link 
+                      to={`/section/${section.id}`}
+                      className="text-decoration-none h-100 d-block"
+                      style={{color: 'inherit'}}
+                    >
+                      <div className="reddit-card-body d-flex flex-column h-100 p-3">
+                        {/* Header Section - Fixed height */}
+                        <div className="d-flex justify-content-between align-items-start mb-2" 
+                             style={{minHeight: '45px'}}>
+                          <div className="flex-grow-1 me-3">
+                            <h2 className="h5 fw-bold reddit-text-primary mb-1 hover-text-primary" 
+                                style={{
+                                  fontSize: '0.95rem',
+                                  lineHeight: '1.3',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                  maxHeight: '2.6rem'
+                                }}>
+                              {section.sectionNumber} {section.title}
+                            </h2>
+                            <div className="reddit-text-muted" style={{fontSize: '0.75rem'}}>
+                              Section ID: {section.anchorId}
+                            </div>
+                          </div>
+                          <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleBookmark(section.id);
+                              }}
+                              className="btn btn-outline-secondary btn-sm"
+                              style={{fontSize: '0.75rem', padding: '4px 8px'}}
+                              title={bookmarks.has(section.id.toString()) ? 'Remove bookmark' : 'Add bookmark'}
+                            >
+                              <FaBookmark className={bookmarks.has(section.id.toString()) ? 'text-warning' : ''} 
+                                         style={{fontSize: '0.7rem'}} />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Content Section - Flexible height */}
+                        <div className="reddit-text-secondary flex-grow-1 mb-2">
+                          <p style={{
+                            fontSize: '0.85rem',
+                            lineHeight: '1.4',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            margin: 0
+                          }}>
+                            {section.content}
+                          </p>
+                        </div>
+                        
+                        {/* Footer Section - Fixed height */}
+                        <div className="d-flex justify-content-between align-items-center mt-auto pt-2 border-top" 
+                             style={{minHeight: '32px'}}>
+                          <div className="reddit-text-muted" style={{fontSize: '0.75rem'}}>
+                            Click to read full section
+                          </div>
+                          <div className="btn-reddit btn-sm" style={{fontSize: '0.8rem', padding: '4px 8px'}}>
+                            <FaEye className="me-1" style={{fontSize: '0.7rem'}} />
+                            Read More
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {standard.pagination && !showSearchResults && (
+            <div className="reddit-pagination">
+              <button 
+                className="reddit-pagination-btn"
+                disabled={!standard.pagination.hasPrevPage || paginationLoading}
+                onClick={async () => {
+                  if (standard.pagination?.hasPrevPage && !paginationLoading) {
+                    try {
+                      setPaginationLoading(true);
+                      const prevPage = standard.pagination.currentPage - 1;
+                      const prevPageData = await apiService.getStandard(parseInt(id!), prevPage);
+                      setStandard(prevPageData);
+                    } catch (err) {
+                      console.error('Error loading previous page:', err);
+                      setError('Failed to load previous page');
+                    } finally {
+                      setPaginationLoading(false);
+                    }
+                  }
+                }}
+              >
+                <FaChevronLeft className="me-1" />
+                Previous
+              </button>
+              <span className="reddit-text-secondary">
+                Page {standard.pagination.currentPage} of {standard.pagination.totalPages}
+              </span>
+              <button 
+                className="reddit-pagination-btn"
+                disabled={!standard.pagination.hasNextPage || paginationLoading}
+                onClick={async () => {
+                  if (standard.pagination?.hasNextPage && !paginationLoading) {
+                    try {
+                      setPaginationLoading(true);
+                      const nextPage = standard.pagination.currentPage + 1;
+                      const nextPageData = await apiService.getStandard(parseInt(id!), nextPage);
+                      setStandard(nextPageData);
+                    } catch (err) {
+                      console.error('Error loading next page:', err);
+                      setError('Failed to load next page');
+                    } finally {
+                      setPaginationLoading(false);
+                    }
+                  }
+                }}
+              >
+                Next
+                <FaChevronRight className="ms-1" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

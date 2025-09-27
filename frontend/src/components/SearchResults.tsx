@@ -1,38 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../services/api';
-
-interface SearchResult {
-  query: string;
-  totalResults: number;
-  results: Array<{
-    standard: {
-      id: number;
-      title: string;
-      type: string;
-      version: string;
-    };
-    sections: Array<{
-      id: number;
-      sectionNumber: string;
-      title: string;
-      fullTitle: string;
-      content: string;
-      wordCount: number;
-      anchorId: string;
-      chapter: {
-        id: number;
-        title: string;
-        number: string;
-      };
-    }>;
-  }>;
-  searchMetadata: {
-    searchedStandards: number[];
-    totalSections: number;
-    averageWordCount: number;
-  };
-}
+import { 
+  FaSearch, 
+  FaBook, 
+  FaArrowLeft, 
+  FaExclamationTriangle, 
+  FaHome, 
+  FaList, 
+  FaEye,
+  FaCog,
+  FaUsers,
+  FaChartBar,
+  FaRocket
+} from 'react-icons/fa';
 
 interface SearchResultsProps {
   query: string;
@@ -40,19 +21,18 @@ interface SearchResultsProps {
 }
 
 const SearchResults = ({ query, onBack }: SearchResultsProps) => {
-  const [results, setResults] = useState<SearchResult | null>(null);
+  const [results, setResults] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sectionPages, setSectionPages] = useState<Record<number, number>>({});
 
   useEffect(() => {
     const performSearch = async () => {
       try {
         setLoading(true);
-        const data = await apiService.searchAll(query, undefined, undefined, 50);
-        setResults(data);
+        const searchResults = await apiService.searchAll(query);
+        setResults(searchResults);
       } catch (err) {
-        setError('Failed to perform search. Please try again.');
+        setError('Search failed. Please try again.');
         console.error('Search error:', err);
       } finally {
         setLoading(false);
@@ -66,14 +46,21 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
 
   if (loading) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-animated">
-        <div className="text-center glass-card p-5 rounded-4">
-          <div className="loading-spinner mx-auto mb-4"></div>
-          <p className="h4 gradient-text fw-semibold mb-4">Searching Standards...</p>
-          <div className="bouncing-dots">
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
+      <div className="reddit-layout">
+        <div className="reddit-sidebar">
+          <div className="reddit-sidebar-section">
+            <div className="reddit-nav-brand">
+              <FaRocket />
+              PMInsight
+            </div>
+          </div>
+        </div>
+        <div className="reddit-main">
+          <div className="reddit-content">
+            <div className="reddit-loading">
+              <div className="reddit-spinner"></div>
+              <p>Searching...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -82,271 +69,242 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
 
   if (error) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-animated">
-        <div className="text-center glass-card p-5 rounded-4" style={{maxWidth: '400px'}}>
-          <div className="display-1 mb-4 text-danger">⚠️</div>
-          <h1 className="h2 fw-bold gradient-text mb-4">Search Error</h1>
-          <p className="text-white-80 mb-4">{error}</p>
-          <button 
-            onClick={onBack}
-            className="btn btn-primary hover-lift d-flex align-items-center mx-auto"
-          >
-            <svg className="me-2" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Search
-          </button>
+      <div className="reddit-layout">
+        <div className="reddit-sidebar">
+          <div className="reddit-sidebar-section">
+            <div className="reddit-nav-brand">
+              <FaRocket />
+              PMInsight
+            </div>
+          </div>
+        </div>
+        <div className="reddit-main">
+          <div className="reddit-content">
+            <div className="reddit-error">
+              <FaExclamationTriangle className="reddit-error-icon" />
+              <h2 className="h3 fw-bold reddit-text-primary mb-3">Search Error</h2>
+              <p className="reddit-text-secondary mb-4">{error}</p>
+              <button onClick={onBack} className="btn-reddit">
+                <FaArrowLeft className="me-2" />
+                Back to Standards
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  const handleSectionPageChange = (standardId: number, newPage: number) => {
-    setSectionPages(prev => ({
-      ...prev,
-      [standardId]: newPage
-    }));
-  };
-
-  const getPaginatedSections = (standardId: number, sections: any[]) => {
-    const currentPage = sectionPages[standardId] || 1;
-    const sectionsPerPage = 4;
-    const startIndex = (currentPage - 1) * sectionsPerPage;
-    const endIndex = startIndex + sectionsPerPage;
-    return sections.slice(startIndex, endIndex);
-  };
-
-  const getTotalPages = (sections: any[]) => {
-    return Math.ceil(sections.length / 4);
-  };
-
-  if (!results) {
-    return null;
-  }
-
   return (
-    <div className="min-vh-100 bg-animated position-relative">
-      {/* Floating Background Orbs */}
-      <div className="floating-orbs">
-        <div className="orb orb-1"></div>
-        <div className="orb orb-2"></div>
-        <div className="orb orb-3"></div>
+    <div className="reddit-layout">
+      {/* Reddit-Style Sidebar */}
+      <div className="reddit-sidebar">
+        <div className="reddit-sidebar-section">
+          <div className="reddit-nav-brand">
+            <FaRocket />
+            PMInsight
+          </div>
+        </div>
+        
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Navigation</div>
+          <Link to="/" className="reddit-sidebar-link">
+            <FaHome className="me-2" />
+            Home
+          </Link>
+          <Link to="/standards" className="reddit-sidebar-link">
+            <FaBook className="me-2" />
+            Standards
+          </Link>
+          <button onClick={onBack} className="reddit-sidebar-link">
+            <FaArrowLeft className="me-2" />
+            Back to Standards
+          </button>
+        </div>
+
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Search Results</div>
+          <div className="reddit-sidebar-link">
+            <FaSearch className="me-2" />
+            Query: "{query}"
+          </div>
+          {results && (
+            <>
+              <div className="reddit-sidebar-link">
+                <FaBook className="me-2" />
+                {results.totalResults} results
+              </div>
+              <div className="reddit-sidebar-link">
+                <FaList className="me-2" />
+                {results.standardsSearched} standards
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Tools</div>
+          <div className="reddit-sidebar-link">
+            <FaCog className="me-2" />
+            Settings
+          </div>
+          <div className="reddit-sidebar-link">
+            <FaUsers className="me-2" />
+            Community
+          </div>
+        </div>
       </div>
 
-      {/* Header */}
-      <header className="header-glass position-sticky" style={{top: 0, zIndex: 10}}>
-        <div className="container">
-          <div className="row align-items-center py-4">
-            <div className="col-md-8">
-              <div className="d-flex align-items-center gap-4">
-                <button 
-                  onClick={onBack}
-                  className="text-info text-decoration-none btn btn-link p-0"
-                >
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                </button>
-                <div>
-                  <h1 className="display-5 fw-bold gradient-text text-glow mb-0">
-                    Search Results
-                  </h1>
-                  <p className="text-white-80 fs-5 mt-1 mb-0">
-                    Found {results.totalResults} results for "{query}"
-                  </p>
-                </div>
+      {/* Main Content */}
+      <div className="reddit-main">
+        <div className="reddit-nav">
+          <div className="container d-flex justify-content-between align-items-center">
+            <div className="d-flex align-items-center">
+              <button onClick={onBack} className="btn-reddit-outline btn-sm me-3">
+                <FaArrowLeft className="me-1" />
+                Back
+              </button>
+              <div>
+                <h1 className="h4 fw-bold reddit-text-primary mb-0">
+                  Search Results
+                </h1>
+                <p className="reddit-text-secondary mb-0">
+                  Query: "{query}"
+                </p>
               </div>
             </div>
-            <div className="col-md-4 text-end">
-              <div className="status-indicator">
-                <div className="status-dot green"></div>
-                <span className="text-white-90 fw-medium">Search Complete</span>
-              </div>
+            <div className="reddit-nav-links">
+              <Link to="/" className="reddit-nav-link">
+                <FaHome className="me-1" />
+                Home
+              </Link>
+              <Link to="/insights" className="reddit-nav-link">
+                <FaChartBar className="me-1" />
+                Insights
+              </Link>
             </div>
           </div>
         </div>
-      </header>
 
-      <main className="position-relative" style={{zIndex: 10}}>
-        <div className="container py-5">
-          {/* Search Metadata */}
-          <div className="row mb-4">
-            <div className="col-12">
-              <div className="card">
-                <div className="card-content">
-                  <div className="row text-center">
-                    <div className="col-md-3">
-                      <div className="h4 fw-bold text-primary mb-1">{results.totalResults}</div>
-                      <div className="text-white-70 small">Total Results</div>
+        <div className="reddit-content">
+          {/* Search Summary */}
+          {results && (
+            <div className="reddit-card reddit-fade-in mb-4">
+              <div className="reddit-card-body">
+                <div className="row text-center">
+                  <div className="col-md-3">
+                    <div className="reddit-text-primary fw-bold fs-3" style={{color: 'var(--reddit-orange)'}}>
+                      {results.totalResults}
                     </div>
-                    <div className="col-md-3">
-                      <div className="h4 fw-bold text-info mb-1">{results.searchMetadata.searchedStandards.length}</div>
-                      <div className="text-white-70 small">Standards Searched</div>
+                    <div className="reddit-text-secondary small">Total Results</div>
+                  </div>
+                  <div className="col-md-3">
+                    <div className="reddit-text-primary fw-bold fs-3" style={{color: 'var(--reddit-blue)'}}>
+                      {results.standardsSearched}
                     </div>
-                    <div className="col-md-3">
-                      <div className="h4 fw-bold text-success mb-1">{results.searchMetadata.totalSections}</div>
-                      <div className="text-white-70 small">Sections Found</div>
+                    <div className="reddit-text-secondary small">Standards Searched</div>
+                  </div>
+                  <div className="col-md-3">
+                    <div className="reddit-text-primary fw-bold fs-3" style={{color: 'var(--reddit-orange)'}}>
+                      {results.sectionsFound}
                     </div>
-                    <div className="col-md-3">
-                      <div className="h4 fw-bold text-warning mb-1">{results.searchMetadata.averageWordCount}</div>
-                      <div className="text-white-70 small">Avg Words</div>
+                    <div className="reddit-text-secondary small">Sections Found</div>
+                  </div>
+                  <div className="col-md-3">
+                    <div className="reddit-text-primary fw-bold fs-3" style={{color: 'var(--reddit-blue)'}}>
+                      {results.averageWords}
                     </div>
+                    <div className="reddit-text-secondary small">Avg Words</div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Results by Standard */}
-          <div className="row">
-            {results.results.map((standardResult, index) => (
-              <div key={standardResult.standard.id} className="col-12 mb-5">
-                <div className="card">
-                  <div className="card-content">
-                    <div className="d-flex justify-content-between align-items-start mb-4">
-                      <div>
-                        <h2 className="h4 fw-bold text-white mb-2">
-                          {standardResult.standard.title}
-                        </h2>
-                        <div className="d-flex align-items-center gap-3 small text-white-70">
-                          <span className="glass px-3 py-1 rounded-pill">
-                            {standardResult.standard.type}
-                          </span>
-                          <span className="glass px-3 py-1 rounded-pill">
-                            {standardResult.standard.version}
-                          </span>
-                          <span className="glass px-3 py-1 rounded-pill text-primary">
-                            {standardResult.sections.length} sections
-                          </span>
-                        </div>
-                      </div>
-                      <Link 
-                        to={`/standard/${standardResult.standard.id}`}
-                        className="btn btn-outline-primary btn-sm"
-                      >
-                        View Standard
-                      </Link>
-                    </div>
-
-                    {/* Sections with Pagination */}
-                    <div className="row">
-                      {getPaginatedSections(standardResult.standard.id, standardResult.sections).map((section, sectionIndex) => (
-                        <div key={section.id} className="col-md-6 mb-4">
-                          <div className="card hover-lift">
-                            <div className="card-content">
-                              <div className="d-flex justify-content-between align-items-start mb-3">
-                                <h3 className="h6 fw-bold text-white mb-0">
-                                  {section.title}
-                                </h3>
-                                <span className="text-white-60 small">
-                                  {section.wordCount} words
-                                </span>
-                              </div>
-                              
-                              <div className="mb-3">
-                                <span className="text-white-70 small">
-                                  {section.chapter.number} • {section.chapter.title}
-                                </span>
-                              </div>
-
-                              <p className="text-white-80 small mb-3" style={{
-                                display: '-webkit-box',
-                                WebkitLineClamp: 3,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden'
-                              }}>
-                                {section.content.substring(0, 200)}...
-                              </p>
-
-                              <div className="d-flex justify-content-between align-items-center">
-                                <span className="text-white-60 small font-mono">
-                                  {section.sectionNumber}
-                                </span>
-                                <Link 
-                                  to={`/standard/${standardResult.standard.id}/section/${section.id}`}
-                                  className="btn btn-sm btn-outline-primary"
-                                >
-                                  Read More
-                                </Link>
-                              </div>
+          {/* Search Results */}
+          {results && results.results.length > 0 ? (
+            <div className="row g-4">
+              {results.results.map((result: any, index: number) => (
+                <div key={result.id} className="col-12">
+                  <div className="reddit-card search-result-card reddit-fade-in" style={{animationDelay: `${index * 0.1}s`}}>
+                    <Link 
+                      to={`/section/${result.id}`}
+                      className="text-decoration-none"
+                      style={{color: 'inherit'}}
+                    >
+                      <div className="reddit-card-body">
+                        <div className="d-flex justify-content-between align-items-start mb-3">
+                          <div className="flex-grow-1">
+                            <h3 className="h5 fw-bold reddit-text-primary mb-2 hover-text-primary">
+                              {result.sectionNumber} {result.title}
+                            </h3>
+                            <div className="d-flex align-items-center reddit-text-secondary mb-2">
+                              <FaBook className="me-2" />
+                              <span className="fw-medium">{result.standardTitle}</span>
+                            </div>
+                            <div className="reddit-text-muted small">
+                              Section ID: {result.anchorId}
+                            </div>
+                          </div>
+                          <div className="text-end">
+                            <div className="reddit-status">
+                              <div className="reddit-status-dot"></div>
+                              <span>{(result.similarity * 100).toFixed(1)}% match</span>
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-
-                    {/* Pagination Controls */}
-                    {getTotalPages(standardResult.sections) > 1 && (
-                      <div className="d-flex justify-content-center mt-4">
-                        <nav aria-label="Section pagination">
-                          <ul className="pagination pagination-sm">
-                            <li className={`page-item ${(sectionPages[standardResult.standard.id] || 1) === 1 ? 'disabled' : ''}`}>
-                              <button 
-                                className="page-link"
-                                onClick={() => handleSectionPageChange(standardResult.standard.id, (sectionPages[standardResult.standard.id] || 1) - 1)}
-                                disabled={(sectionPages[standardResult.standard.id] || 1) === 1}
-                              >
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                              </button>
-                            </li>
-                            
-                            {Array.from({ length: getTotalPages(standardResult.sections) }, (_, i) => i + 1).map(page => (
-                              <li key={page} className={`page-item ${(sectionPages[standardResult.standard.id] || 1) === page ? 'active' : ''}`}>
-                                <button 
-                                  className="page-link"
-                                  onClick={() => handleSectionPageChange(standardResult.standard.id, page)}
-                                >
-                                  {page}
-                                </button>
-                              </li>
-                            ))}
-                            
-                            <li className={`page-item ${(sectionPages[standardResult.standard.id] || 1) === getTotalPages(standardResult.sections) ? 'disabled' : ''}`}>
-                              <button 
-                                className="page-link"
-                                onClick={() => handleSectionPageChange(standardResult.standard.id, (sectionPages[standardResult.standard.id] || 1) + 1)}
-                                disabled={(sectionPages[standardResult.standard.id] || 1) === getTotalPages(standardResult.sections)}
-                              >
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                              </button>
-                            </li>
-                          </ul>
-                        </nav>
+                        
+                        <div className="reddit-text-secondary mb-3">
+                          <p>
+                            {result.content.substring(0, 300)}
+                            {result.content.length > 300 && '...'}
+                          </p>
+                        </div>
+                        
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div className="reddit-text-muted small">
+                            <strong>Similarity:</strong> {(result.similarity * 100).toFixed(1)}%
+                          </div>
+                          <div className="btn-reddit btn-sm">
+                            <FaEye className="me-1" />
+                            View Section
+                          </div>
+                        </div>
                       </div>
-                    )}
-
-                    {/* Show More/Less Toggle for Standards with Many Sections */}
-                    {standardResult.sections.length > 4 && (
-                      <div className="text-center mt-3">
-                        <small className="text-white-70">
-                          Showing {getPaginatedSections(standardResult.standard.id, standardResult.sections).length} of {standardResult.sections.length} sections
-                        </small>
-                      </div>
-                    )}
+                    </Link>
                   </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="reddit-card reddit-fade-in">
+              <div className="reddit-card-body text-center">
+                <FaSearch className="display-1 reddit-text-muted mb-4" />
+                <h2 className="h4 fw-bold reddit-text-primary mb-3">No Results Found</h2>
+                <p className="reddit-text-secondary mb-4">
+                  No sections found matching your search query. Try different keywords or check your spelling.
+                </p>
+                <button onClick={onBack} className="btn-reddit">
+                  <FaArrowLeft className="me-2" />
+                  Back to Standards
+                </button>
               </div>
-            ))}
-          </div>
-
-          {results.results.length === 0 && (
-            <div className="text-center py-5">
-              <div className="display-1 mb-4 text-white-60">🔍</div>
-              <h2 className="h3 fw-bold gradient-text mb-3">No Results Found</h2>
-              <p className="text-white-80 mb-4">
-                Try adjusting your search terms or browse our standards library.
-              </p>
-              <button onClick={onBack} className="btn btn-primary hover-lift">
-                Try Different Search
-              </button>
             </div>
           )}
+
+          {/* Back Button */}
+          <div className="reddit-pagination">
+            <button onClick={onBack} className="reddit-pagination-btn">
+              <FaArrowLeft className="me-1" />
+              Back to Standards
+            </button>
+            <Link to="/standards" className="reddit-pagination-btn">
+              <FaList className="me-1" />
+              All Standards
+            </Link>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

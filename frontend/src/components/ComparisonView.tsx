@@ -49,7 +49,7 @@ const ComparisonView = () => {
         <div className="text-center glass-card p-5 rounded-4" style={{maxWidth: '400px'}}>
           <div className="display-1 mb-4 text-danger">⚠️</div>
           <h1 className="h2 fw-bold gradient-text mb-4">Error</h1>
-          <p className="text-white-80 mb-4">{error || 'Comparison not found'}</p>
+          <p className="text-secondary mb-4">{error || 'Comparison not found'}</p>
           <Link to="/" className="btn btn-primary hover-lift d-flex align-items-center mx-auto">
             <svg className="me-2" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -86,7 +86,7 @@ const ComparisonView = () => {
                 <div>
                   <h1 className="display-5 fw-bold gradient-text text-glow mb-0">{topic.name}</h1>
                   {topic.description && (
-                    <p className="text-white-80 fs-5 mt-1 mb-0">{topic.description}</p>
+                    <p className="text-secondary fs-5 mt-1 mb-0">{topic.description}</p>
                   )}
                 </div>
               </div>
@@ -94,7 +94,7 @@ const ComparisonView = () => {
             <div className="col-md-4 text-end">
               <div className="status-indicator">
                 <div className="status-dot green"></div>
-                <span className="text-white-90 fw-medium">AI Analysis</span>
+                <span className="text-secondary fw-medium">AI Analysis</span>
               </div>
             </div>
           </div>
@@ -107,8 +107,8 @@ const ComparisonView = () => {
           <section className="mb-5">
             <div className="card">
               <div className="card-content">
-                <h2 className="h4 fw-bold text-white mb-4">Overall Summary</h2>
-                <p className="text-white-80">
+                <h2 className="h4 fw-bold text-primary mb-4">Overall Summary</h2>
+                <p className="text-secondary">
                   {comparisonData.overallSummary}
                 </p>
               </div>
@@ -125,7 +125,7 @@ const ComparisonView = () => {
                   <h3 className="text-lg font-semibold text-gray-900">
                     {standard.standardTitle}
                   </h3>
-                  <div className="text-primary-600">
+                  <div className="text-primary">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
@@ -144,7 +144,7 @@ const ComparisonView = () => {
                         <div key={sectionIndex} className="text-sm">
                           <span className="text-gray-600">{section.sectionTitle}</span>
                           <span className="text-gray-400 mx-2">•</span>
-                          <span className="text-primary-600 font-mono text-xs">
+                          <span className="text-primary font-mono text-xs">
                             {section.anchorId}
                           </span>
                         </div>
@@ -206,7 +206,7 @@ const ComparisonView = () => {
         </div>
 
         {/* Footer */}
-        <div className="mt-4 text-center small text-white-60">
+        <div className="mt-4 text-center small text-muted">
           <p>AI-generated analysis • Generated on {new Date(comparison.generatedAt).toLocaleDateString()}</p>
         </div>
       </main>

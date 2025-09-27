@@ -1,45 +1,37 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { apiService } from '../services/api';
-
-interface InsightsData {
-  standards: Array<{
-    id: number;
-    title: string;
-    type: string;
-    version: string;
-    _count: {
-      sections: number;
-      chapters: number;
-    };
-  }>;
-  totalSections: number;
-  totalChapters: number;
-  totalWords: number;
-  averageWordsPerSection: number;
-  topicCoverage: Array<{
-    topic: string;
-    coverage: number;
-    standards: number;
-  }>;
-  generatedAt: string;
-}
+import {
+  FaChartBar,
+  FaBook,
+  FaHome,
+  FaArrowLeft,
+  FaExclamationTriangle,
+  FaRocket,
+  FaCog,
+  FaUsers,
+  FaSearch,
+} from 'react-icons/fa';
 
 const InsightsDashboard = () => {
-  const [insights, setInsights] = useState<InsightsData | null>(null);
+  const [insights, setInsights] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchInsights = async () => {
       try {
         setLoading(true);
+        setError(null);
         const data = await apiService.getInsights();
-        setInsights(data);
+        if (data) {
+          setInsights(data);
+        } else {
+          setError('No insights data available.');
+        }
       } catch (err) {
+        console.error('Error fetching insights:', err);
         setError('Failed to load insights. Please try again.');
-        console.error('Insights error:', err);
       } finally {
         setLoading(false);
       }
@@ -48,241 +40,267 @@ const InsightsDashboard = () => {
     fetchInsights();
   }, []);
 
-  const handleTopicSearch = (topic: string) => {
-    // Navigate to search results with the topic as query
-    navigate(`/?search=${encodeURIComponent(topic)}`);
-  };
-
+  // ------------------------
+  // Loading State
+  // ------------------------
   if (loading) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-animated">
-        <div className="text-center glass-card p-5 rounded-4">
-          <div className="loading-spinner mx-auto mb-4"></div>
-          <p className="h4 gradient-text fw-semibold mb-4">Generating Insights...</p>
-          <div className="bouncing-dots">
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
+      <div className="reddit-layout">
+        <Sidebar />
+        <div className="reddit-main">
+          <div className="reddit-content d-flex flex-column align-items-center justify-content-center py-5">
+            <div className="reddit-spinner mb-3"></div>
+            <p className="reddit-text-secondary fs-5">Loading insights...</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (error || !insights) {
+  // ------------------------
+  // Error State
+  // ------------------------
+  if (error) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-animated">
-        <div className="text-center glass-card p-5 rounded-4" style={{maxWidth: '400px'}}>
-          <div className="display-1 mb-4 text-danger">⚠️</div>
-          <h1 className="h2 fw-bold gradient-text mb-4">Error</h1>
-          <p className="text-white-80 mb-4">{error || 'Insights not available'}</p>
-          <Link to="/" className="btn btn-primary hover-lift d-flex align-items-center mx-auto">
-            <svg className="me-2" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Dashboard
-          </Link>
+      <div className="reddit-layout">
+        <Sidebar />
+        <div className="reddit-main">
+          <div className="reddit-content text-center py-5">
+            <FaExclamationTriangle className="reddit-error-icon mb-3" />
+            <h2 className="h3 fw-bold reddit-text-primary mb-2">Error</h2>
+            <p className="reddit-text-secondary mb-4">{error}</p>
+            <Link to="/standards" className="btn-reddit">
+              <FaArrowLeft className="me-2" />
+              Back to Standards
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
+  // ------------------------
+  // Main Dashboard
+  // ------------------------
   return (
-    <div className="min-vh-100 bg-animated position-relative">
-      {/* Floating Background Orbs */}
-      <div className="floating-orbs">
-        <div className="orb orb-1"></div>
-        <div className="orb orb-2"></div>
-        <div className="orb orb-3"></div>
-      </div>
+    <div className="reddit-layout">
+      <Sidebar />
+      <div className="reddit-main">
+        <TopNav />
 
-      {/* Header */}
-      <header className="header-glass position-sticky" style={{top: 0, zIndex: 10}}>
-        <div className="container">
-          <div className="row align-items-center py-4">
-            <div className="col-md-8">
-              <div className="d-flex align-items-center gap-4">
-                <Link to="/" className="text-info text-decoration-none">
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                </Link>
-                <div>
-                  <h1 className="display-5 fw-bold gradient-text text-glow mb-0">
-                    Standards Insights
-                  </h1>
-                  <p className="text-white-80 fs-5 mt-1 mb-0">
-                    Comprehensive analysis of project management standards
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-4 text-end">
-              <div className="status-indicator">
-                <div className="status-dot green"></div>
-                <span className="text-white-90 fw-medium">Analysis</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="position-relative" style={{zIndex: 10}}>
-        <div className="container py-5">
-          {/* Overview Statistics */}
-          <section className="mb-5">
-            <div className="row g-4 mb-5">
-              <div className="col-md-3">
-                <div className="card text-center">
-                  <div className="card-content">
-                    <div className="display-4 fw-bold text-primary mb-2">{insights.standards.length}</div>
-                    <div className="text-white-70">Standards</div>
+        <div className="reddit-content">
+          {/* Overview Stats */}
+          <Card title="Overview">
+            <div className="row text-center g-4">
+              {[
+                { label: 'Standards', value: insights?.totalStandards || 0, color: 'var(--reddit-orange)' },
+                { label: 'Sections', value: insights?.totalSections || 0, color: 'var(--reddit-blue)' },
+                { label: 'Chapters', value: insights?.totalChapters || 0, color: 'var(--reddit-orange)' },
+                { label: 'Total Words', value: insights?.totalWords?.toLocaleString() || 0, color: 'var(--reddit-blue)' },
+              ].map((stat, idx) => (
+                <div key={idx} className="col-6 col-md-3">
+                  <div className="fw-bold fs-3" style={{ color: stat.color }}>
+                    {stat.value}
                   </div>
-                </div>
-              </div>
-              <div className="col-md-3">
-                <div className="card text-center">
-                  <div className="card-content">
-                    <div className="display-4 fw-bold text-info mb-2">{insights.totalSections.toLocaleString()}</div>
-                    <div className="text-white-70">Sections</div>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-3">
-                <div className="card text-center">
-                  <div className="card-content">
-                    <div className="display-4 fw-bold text-success mb-2">{insights.totalChapters.toLocaleString()}</div>
-                    <div className="text-white-70">Chapters</div>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-3">
-                <div className="card text-center">
-                  <div className="card-content">
-                    <div className="display-4 fw-bold text-warning mb-2">{insights.totalWords.toLocaleString()}</div>
-                    <div className="text-white-70">Total Words</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="row g-4">
-              <div className="col-md-6">
-                <div className="card">
-                  <div className="card-content">
-                    <h3 className="h5 fw-bold text-white mb-4">Standards Overview</h3>
-                    <div className="row">
-                      {insights.standards.map((standard) => (
-                        <div key={standard.id} className="col-12 mb-3">
-                          <div className="d-flex justify-content-between align-items-center">
-                            <div>
-                              <h4 className="h6 fw-bold text-white mb-1">{standard.title}</h4>
-                              <div className="d-flex align-items-center gap-3 small text-white-70">
-                                <span className="glass px-2 py-1 rounded-pill">
-                                  {standard.type}
-                                </span>
-                                <span className="glass px-2 py-1 rounded-pill">
-                                  {standard.version}
-                                </span>
-                                <span className="glass px-2 py-1 rounded-pill text-primary">
-                                  {standard._count.sections} sections
-                                </span>
-                              </div>
-                            </div>
-                            <Link 
-                              to={`/standard/${standard.id}`}
-                              className="btn btn-sm btn-outline-primary"
-                            >
-                              View
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <div className="card">
-                  <div className="card-content">
-                    <h3 className="h5 fw-bold text-white mb-4">Content Statistics</h3>
-                    <div className="row text-center">
-                      <div className="col-6 mb-3">
-                        <div className="h4 fw-bold text-primary mb-1">{insights.averageWordsPerSection}</div>
-                        <div className="text-white-70 small">Avg Words/Section</div>
-                      </div>
-                      <div className="col-6 mb-3">
-                        <div className="h4 fw-bold text-info mb-1">
-                          {Math.round(insights.totalWords / insights.totalSections).toLocaleString()}
-                        </div>
-                        <div className="text-white-70 small">Words/Section</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Topic Coverage */}
-          <section>
-            <div className="text-center mb-5">
-              <h2 className="display-5 fw-bold gradient-text text-glow mb-4">
-                Topic Coverage Analysis
-              </h2>
-              <p className="text-white-80 fs-5 mx-auto" style={{maxWidth: '600px'}}>
-                Discover which topics are most comprehensively covered across standards
-              </p>
-            </div>
-
-            <div className="row g-4">
-              {insights.topicCoverage.map((topic) => (
-                <div key={topic.topic} className="col-md-6 col-lg-4">
-                  <div className="card hover-lift">
-                    <div className="card-content">
-                      <div className="d-flex justify-content-between align-items-start mb-3">
-                        <h3 className="h6 fw-bold text-white mb-0">{topic.topic}</h3>
-                        <span className="glass px-3 py-1 rounded-pill text-primary">
-                          {topic.coverage} sections
-                        </span>
-                      </div>
-                      
-                      <div className="mb-3">
-                        <div className="progress" style={{height: '6px'}}>
-                          <div 
-                            className="progress-bar bg-primary" 
-                            style={{width: `${Math.min((topic.coverage / Math.max(...insights.topicCoverage.map(t => t.coverage))) * 100, 100)}%`}}
-                          ></div>
-                        </div>
-                      </div>
-
-                      <div className="d-flex justify-content-between align-items-center">
-                        <span className="text-white-70 small">
-                          Covered in {topic.standards} standards
-                        </span>
-                        <button 
-                          onClick={() => handleTopicSearch(topic.topic)}
-                          className="btn btn-sm btn-outline-primary"
-                        >
-                          Search
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <div className="reddit-text-secondary">{stat.label}</div>
                 </div>
               ))}
             </div>
-          </section>
+          </Card>
 
-          {/* Footer */}
-          <div className="mt-5 text-center small text-white-60">
-            <p>Generated insights • Generated on {new Date(insights.generatedAt).toLocaleDateString()}</p>
+          {/* Standards Breakdown */}
+{insights?.standards && (
+  <Card title="Standards Breakdown">
+    <div className="row g-4">
+      {insights.standards.map((standard: any) => (
+        <div key={standard.id} className="col-md-6 col-lg-4">
+          <div className="reddit-card insights-card h-100">
+            <div className="reddit-card-body d-flex flex-column justify-content-between">
+              
+              {/* Title */}
+              <h3 className="h6 fw-bold reddit-text-primary mb-3 text-truncate">
+                {standard.title}
+              </h3>
+
+              {/* Main Stats */}
+              <div className="row text-center mb-3">
+                <div className="col-6">
+                  <div className="fw-bold fs-4" style={{ color: 'var(--reddit-orange)' }}>
+                    {standard.sectionCount}
+                  </div>
+                  <div className="reddit-text-secondary small text-uppercase">
+                    Sections
+                  </div>
+                </div>
+                <div className="col-6">
+                  <div className="fw-bold fs-4" style={{ color: 'var(--reddit-blue)' }}>
+                    {standard.wordCount?.toLocaleString() || 0}
+                  </div>
+                  <div className="reddit-text-secondary small text-uppercase">
+                    Words
+                  </div>
+                </div>
+              </div>
+
+              {/* Details */}
+              <div className="row text-center border-top pt-3">
+                <div className="col-6">
+                  <div className="reddit-text-secondary small">Avg Words / Section</div>
+                  <div className="fw-bold reddit-text-primary fs-6">
+                    {standard.averageWordsPerSection?.toFixed(0) || 0}
+                  </div>
+                </div>
+                <div className="col-6">
+                  <div className="reddit-text-secondary small">Words / Section</div>
+                  <div className="fw-bold reddit-text-primary fs-6">
+                    {standard.wordsPerSection?.toFixed(0) || 0}
+                  </div>
+                </div>
+              </div>
+              
+            </div>
           </div>
         </div>
-      </main>
+      ))}
+    </div>
+  </Card>
+)}
+
+
+          {/* Topic Coverage */}
+          {insights?.topicCoverage?.length > 0 && (
+            <Card title="Topic Coverage">
+              <p className="reddit-text-secondary fs-6 mb-4">
+                Most frequently covered topics across all standards
+              </p>
+              <div className="row g-4">
+                {insights.topicCoverage.map((topic: any, index: number) => (
+                  <div key={index} className="col-md-6 col-lg-4">
+                    <div className="reddit-card insights-card h-100">
+                      <div className="reddit-card-body d-flex flex-column justify-content-between">
+                        <h4 className="h6 fw-bold reddit-text-primary mb-2">
+                          {topic.name}
+                        </h4>
+                        <p className="reddit-text-secondary small mb-3">{topic.description}</p>
+                        <div className="reddit-text-muted small">
+                          <strong>Coverage:</strong> {topic.coverage}%
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* CTA */}
+          <Card center>
+            <h2 className="h5 fw-bold reddit-text-primary mb-3">Ready to Explore?</h2>
+            <p className="reddit-text-secondary mb-4">
+              Dive deeper into the standards and discover more insights.
+            </p>
+            <div className="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+              <Link to="/standards" className="btn-reddit">
+                <FaBook className="me-2" /> Browse Standards
+              </Link>
+              <Link to="/tutorial" className="btn-reddit-outline">
+                <FaRocket className="me-2" /> Learn More
+              </Link>
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
+
+
+const Sidebar = () => (
+  <div className="reddit-sidebar">
+    <div className="reddit-sidebar-section">
+      <div className="reddit-nav-brand">
+        <FaRocket />
+        PMInsight
+      </div>
+    </div>
+
+    <div className="reddit-sidebar-section">
+      <div className="reddit-sidebar-title">Navigation</div>
+      <Link to="/" className="reddit-sidebar-link">
+        <FaHome className="me-2" /> Home
+      </Link>
+      <Link to="/standards" className="reddit-sidebar-link">
+        <FaBook className="me-2" /> Standards
+      </Link>
+      <Link to="/insights" className="reddit-sidebar-link active">
+        <FaChartBar className="me-2" /> Analytics
+      </Link>
+    </div>
+
+    <div className="reddit-sidebar-section">
+      <div className="reddit-sidebar-title">Quick Actions</div>
+      <Link to="/standards" className="reddit-sidebar-link">
+        <FaSearch className="me-2" /> Search Standards
+      </Link>
+      <Link to="/tutorial" className="reddit-sidebar-link">
+        <FaRocket className="me-2" /> Tutorial
+      </Link>
+    </div>
+
+    <div className="reddit-sidebar-section">
+      <div className="reddit-sidebar-title">Tools</div>
+      <div className="reddit-sidebar-link">
+        <FaCog className="me-2" /> Settings
+      </div>
+      <div className="reddit-sidebar-link">
+        <FaUsers className="me-2" /> Community
+      </div>
+    </div>
+  </div>
+);
+
+
+const TopNav = () => (
+  <div className="reddit-nav">
+    <div className="container d-flex justify-content-between align-items-center">
+      <div className="d-flex align-items-center">
+        <Link to="/standards" className="btn-reddit-outline btn-sm me-3">
+          <FaArrowLeft className="me-1" /> Back
+        </Link>
+        <div>
+          <h1 className="h4 fw-bold reddit-text-primary mb-0">Analytics Dashboard</h1>
+          <p className="reddit-text-secondary mb-0">Project management standards insights</p>
+        </div>
+      </div>
+      <div className="reddit-nav-links">
+        <Link to="/" className="reddit-nav-link">
+          <FaHome className="me-1" /> Home
+        </Link>
+        <Link to="/standards" className="reddit-nav-link">
+          <FaBook className="me-1" /> Standards
+        </Link>
+      </div>
+    </div>
+  </div>
+);
+
+const Card = ({
+  title,
+  children,
+  center = false,
+}: {
+  title?: string;
+  children: React.ReactNode;
+  center?: boolean;
+}) => (
+  <div className="reddit-card reddit-fade-in mb-4">
+    {title && (
+      <div className="reddit-card-header">
+        <h2 className="h5 fw-bold reddit-text-primary mb-0">{title}</h2>
+      </div>
+    )}
+    <div className={`reddit-card-body ${center ? 'text-center' : ''}`}>{children}</div>
+  </div>
+);
 
 export default InsightsDashboard;

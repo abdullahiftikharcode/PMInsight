@@ -2,6 +2,18 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiService, type Standard } from '../services/api';
 import SearchResults from './SearchResults';
+import { 
+  FaSearch, 
+  FaBook, 
+  FaChartBar, 
+  FaRocket,
+  FaSpinner,
+  FaExclamationTriangle,
+  FaArrowRight,
+  FaHome,
+  FaCog,
+  FaUsers
+} from 'react-icons/fa';
 
 const Dashboard = () => {
   const [standards, setStandards] = useState<Standard[]>([]);
@@ -15,8 +27,13 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
         const standardsData = await apiService.getStandards();
-        setStandards(standardsData);
+        if (standardsData && Array.isArray(standardsData)) {
+          setStandards(standardsData);
+        } else {
+          setError('No standards data available');
+        }
       } catch (err) {
         setError('Failed to load data. Please make sure the backend server is running.');
         console.error('Error fetching data:', err);
@@ -44,25 +61,28 @@ const Dashboard = () => {
     }
   };
 
-  const handleBackToDashboard = () => {
+  const handleBackToStandards = () => {
     setShowSearchResults(false);
     setSearchQuery('');
   };
 
-  if (showSearchResults) {
-    return <SearchResults query={searchQuery} onBack={handleBackToDashboard} />;
-  }
-
   if (loading) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-animated">
-        <div className="text-center glass-card p-5 rounded-4">
-          <div className="loading-spinner mx-auto mb-4"></div>
-          <p className="h4 gradient-text fw-semibold mb-4">Loading Standards...</p>
-          <div className="bouncing-dots">
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
+      <div className="reddit-layout">
+        <div className="reddit-sidebar">
+          <div className="reddit-sidebar-section">
+            <div className="reddit-nav-brand">
+              <FaRocket />
+              PMInsight
+            </div>
+          </div>
+        </div>
+        <div className="reddit-main">
+          <div className="reddit-content">
+            <div className="reddit-loading">
+              <div className="reddit-spinner"></div>
+              <p>Loading standards...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -71,189 +91,259 @@ const Dashboard = () => {
 
   if (error) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-animated">
-        <div className="text-center glass-card p-5 rounded-4" style={{maxWidth: '400px'}}>
-          <div className="display-1 mb-4 text-danger">⚠️</div>
-          <h1 className="h2 fw-bold gradient-text mb-4">Connection Error</h1>
-          <p className="text-white-80 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="btn btn-primary hover-lift d-flex align-items-center mx-auto"
-          >
-            <svg className="me-2" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Retry Connection
-          </button>
+      <div className="reddit-layout">
+        <div className="reddit-sidebar">
+          <div className="reddit-sidebar-section">
+            <div className="reddit-nav-brand">
+              <FaRocket />
+              PMInsight
+            </div>
+          </div>
+        </div>
+        <div className="reddit-main">
+          <div className="reddit-content">
+            <div className="reddit-error">
+              <FaExclamationTriangle className="reddit-error-icon" />
+              <h2 className="h3 fw-bold reddit-text-primary mb-3">Connection Error</h2>
+              <p className="reddit-text-secondary mb-4">{error}</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="btn-reddit"
+              >
+                <FaRocket className="me-2" />
+                Retry Connection
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
+  if (showSearchResults) {
+    return <SearchResults query={searchQuery} onBack={handleBackToStandards} />;
+  }
+
   return (
-    <div className="min-vh-100 bg-animated position-relative">
-      {/* Floating Background Orbs */}
-      <div className="floating-orbs">
-        <div className="orb orb-1"></div>
-        <div className="orb orb-2"></div>
-        <div className="orb orb-3"></div>
+    <div className="reddit-layout">
+      {/* Reddit-Style Sidebar */}
+      <div className="reddit-sidebar">
+        <div className="reddit-sidebar-section">
+          <div className="reddit-nav-brand">
+            <FaRocket />
+            PMInsight
+          </div>
+        </div>
+        
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Navigation</div>
+          <Link to="/" className="reddit-sidebar-link">
+            <FaHome className="me-2" />
+            Home
+          </Link>
+          <Link to="/insights" className="reddit-sidebar-link">
+            <FaChartBar className="me-2" />
+            Analytics
+          </Link>
+          <Link to="/tutorial" className="reddit-sidebar-link">
+            <FaRocket className="me-2" />
+            Tutorial
+          </Link>
+        </div>
+
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Quick Actions</div>
+          <div className="reddit-sidebar-link">
+            <FaSearch className="me-2" />
+            Search Standards
+          </div>
+          <div className="reddit-sidebar-link">
+            <FaBook className="me-2" />
+            Browse Library
+          </div>
+        </div>
+
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Standards ({standards.length})</div>
+          {standards.map((standard) => (
+            <Link 
+              key={standard.id} 
+              to={`/standard/${standard.id}`} 
+              className="reddit-sidebar-link"
+            >
+              <FaBook className="me-2" />
+              {standard.title}
+            </Link>
+          ))}
+        </div>
+
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Tools</div>
+          <div className="reddit-sidebar-link">
+            <FaCog className="me-2" />
+            Settings
+          </div>
+          <div className="reddit-sidebar-link">
+            <FaUsers className="me-2" />
+            Community
+          </div>
+        </div>
       </div>
 
-      {/* Header */}
-      <header className="header-glass position-relative" style={{zIndex: 10}}>
-        <div className="container">
-          <div className="row align-items-center py-4">
-            <div className="col-md-8">
-              <h1 className="display-4 fw-bold gradient-text text-glow mb-2">
-                PM Standards Comparison
-              </h1>
-              <p className="text-white-80 fs-5">
-                Comprehensive project management standards library
-              </p>
-            </div>
-            <div className="col-md-4 text-end">
-              <div className="d-flex align-items-center gap-3">
-                <Link to="/insights" className="btn btn-outline-info btn-sm">
-                  <svg className="me-2" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  Insights
-                </Link>
-                <div className="status-indicator">
-                  <div className="status-dot green"></div>
-                  <span className="text-white-90 fw-medium">Online</span>
-                </div>
-              </div>
+      {/* Main Content */}
+      <div className="reddit-main">
+        <div className="reddit-nav">
+          <div className="container d-flex justify-content-between align-items-center">
+            <Link to="/" className="reddit-nav-brand">
+              <FaRocket />
+              PMInsight
+            </Link>
+            <div className="reddit-nav-links">
+              <Link to="/" className="reddit-nav-link">
+                <FaHome className="me-1" />
+                Home
+              </Link>
+              <Link to="/insights" className="reddit-nav-link">
+                <FaChartBar className="me-1" />
+                Insights
+              </Link>
+              <Link to="/tutorial" className="reddit-nav-link">
+                <FaRocket className="me-1" />
+                Tutorial
+              </Link>
             </div>
           </div>
-          
-          {/* Search Bar */}
-          <div className="row mt-4">
-            <div className="col-12">
-              <form onSubmit={handleSearch} className="d-flex gap-3">
-                <div className="flex-grow-1 position-relative">
+        </div>
+
+        <div className="reddit-content">
+          {/* Header */}
+          <div className="reddit-card reddit-fade-in">
+            <div className="reddit-card-body">
+              <h1 className="display-5 fw-bold reddit-text-primary mb-3">
+                Project Management Standards Library
+              </h1>
+              <p className="reddit-text-secondary fs-5 mb-4">
+                Comprehensive project management standards comparison and analysis
+              </p>
+              
+              {/* Search Bar */}
+              <form onSubmit={handleSearch} className="reddit-search">
+                <div className="position-relative">
+                  <FaSearch className="reddit-search-icon" />
                   <input
                     type="text"
-                    className="form-control form-control-lg glass-input"
+                    className="reddit-search-input"
                     placeholder="Search across all standards (e.g., 'risk management', 'stakeholder engagement')"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      color: 'white',
-                      backdropFilter: 'blur(10px)'
-                    }}
                   />
-                  <div className="position-absolute top-50 end-0 translate-middle-y pe-3">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" className="text-white-60">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
                 </div>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary btn-lg px-4 hover-lift"
-                  disabled={!searchQuery.trim()}
-                >
-                  <svg className="me-2" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Search
-                </button>
               </form>
             </div>
           </div>
-        </div>
-      </header>
 
-      <main className="position-relative" style={{zIndex: 10}}>
-        <div className="container py-5">
-
-          {/* Standards Library Section */}
-          <section>
-            <div className="text-center mb-5">
-              <h2 className="display-5 fw-bold gradient-text text-glow mb-4">
-                Standards Library
-              </h2>
-              <p className="text-white-80 fs-5 mx-auto" style={{maxWidth: '600px'}}>
-                Browse and search through comprehensive project management standards
-              </p>
-            </div>
-
-            <div className="row g-4">
-              {standards.map((standard, index) => (
-                <div key={standard.id} className="col-md-6 col-lg-4">
-                  <Link
-                    to={`/standard/${standard.id}`}
-                    className="card hover-lift text-decoration-none"
-                    style={{animationDelay: `${index * 0.1}s`}}
-                  >
-                    <div className="card-content">
-                      <div className="d-flex justify-content-between align-items-start mb-4">
-                        <h3 className="h5 fw-bold text-white mb-0">
-                          {standard.title}
-                        </h3>
-                        <div className="text-primary">
-                          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="d-flex align-items-center small text-white-70 mb-4">
-                        <svg className="me-2 text-primary" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span className="fw-medium">{standard._count.sections} sections</span>
-                      </div>
-                      <div className="d-flex justify-content-between align-items-center">
-                        <span className="glass px-3 py-2 rounded-pill small fw-medium text-primary border border-primary">
-                          Available
-                        </span>
-                        <div className="bouncing-dots">
-                          <div className="dot" style={{width: '6px', height: '6px', background: '#3b82f6'}}></div>
-                          <div className="dot" style={{width: '6px', height: '6px', background: '#6366f1'}}></div>
-                          <div className="dot" style={{width: '6px', height: '6px', background: '#8b5cf6'}}></div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
+          {/* Stats Cards */}
+          <div className="row g-4 mb-4">
+            <div className="col-md-3">
+              <div className="reddit-card reddit-fade-in">
+                <div className="reddit-card-body text-center">
+                  <FaBook className="display-4 reddit-text-primary mb-3" style={{color: 'var(--reddit-orange)'}} />
+                  <h3 className="h4 fw-bold reddit-text-primary mb-2">
+                    {standards.length}
+                  </h3>
+                  <p className="reddit-text-secondary mb-0">Standards</p>
                 </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="footer-glass position-relative mt-5" style={{zIndex: 10}}>
-        <div className="container py-5">
-          <div className="text-center">
-            <div className="mb-4">
-              <h3 className="h3 fw-bold gradient-text mb-3">
-                Project Management Standards Library
-              </h3>
-              <p className="text-white-80">
-                Comprehensive project management standards comparison tool
-              </p>
-            </div>
-            <div className="d-flex justify-content-center align-items-center gap-4 small text-white-60">
-              <div className="d-flex align-items-center gap-2">
-                <div className="status-dot green"></div>
-                <span>React & TypeScript</span>
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <div className="status-dot blue"></div>
-                <span>Standards Library</span>
+            </div>
+            <div className="col-md-3">
+              <div className="reddit-card reddit-fade-in" style={{animationDelay: '0.1s'}}>
+                <div className="reddit-card-body text-center">
+                  <FaChartBar className="display-4 reddit-text-primary mb-3" style={{color: 'var(--reddit-blue)'}} />
+                  <h3 className="h4 fw-bold reddit-text-primary mb-2">
+                    {standards.reduce((acc, std) => acc + std._count.sections, 0)}
+                  </h3>
+                  <p className="reddit-text-secondary mb-0">Sections</p>
+                </div>
               </div>
-              <div className="d-flex align-items-center gap-2">
-                <div className="status-dot purple"></div>
-                <span>Modern UI</span>
+            </div>
+            <div className="col-md-3">
+              <div className="reddit-card reddit-fade-in" style={{animationDelay: '0.2s'}}>
+                <div className="reddit-card-body text-center">
+                  <FaSearch className="display-4 reddit-text-primary mb-3" style={{color: 'var(--reddit-orange)'}} />
+                  <h3 className="h4 fw-bold reddit-text-primary mb-2">
+                    AI-Powered
+                  </h3>
+                  <p className="reddit-text-secondary mb-0">Search</p>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-3">
+              <div className="reddit-card reddit-fade-in" style={{animationDelay: '0.3s'}}>
+                <div className="reddit-card-body text-center">
+                  <FaRocket className="display-4 reddit-text-primary mb-3" style={{color: 'var(--reddit-blue)'}} />
+                  <h3 className="h4 fw-bold reddit-text-primary mb-2">
+                    Free
+                  </h3>
+                  <p className="reddit-text-secondary mb-0">Access</p>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Standards Grid */}
+          <div className="row g-4">
+            {standards.map((standard, index) => (
+              <div key={standard.id} className="col-md-6 col-lg-4">
+                <div className="reddit-card standard-grid-card reddit-fade-in" style={{animationDelay: `${index * 0.1}s`}}>
+                  <div className="reddit-card-body">
+                    <div className="card-header">
+                      <div className="d-flex justify-content-between align-items-start mb-3">
+                        <h3 className="h5 fw-bold reddit-text-primary mb-0" style={{lineHeight: '1.3'}}>
+                          {standard.title}
+                        </h3>
+                        <FaArrowRight className="reddit-text-muted" />
+                      </div>
+                      
+                      <div className="d-flex align-items-center reddit-text-secondary mb-3">
+                        <FaBook className="me-2" />
+                        <span className="fw-medium">{standard._count.sections} sections</span>
+                      </div>
+                    </div>
+                    
+                    <div className="card-footer">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div className="reddit-status available">
+                          <div className="reddit-status-dot"></div>
+                          <span>Available</span>
+                        </div>
+                        <Link 
+                          to={`/standard/${standard.id}`} 
+                          className="btn-reddit btn-sm"
+                        >
+                          <FaBook className="me-1" />
+                          View
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer Info */}
+          <div className="reddit-card reddit-fade-in">
+            <div className="reddit-card-body text-center">
+              <h3 className="h5 fw-bold reddit-text-primary mb-3">
+                Project Management Standards Library
+              </h3>
+              <p className="reddit-text-secondary mb-0">
+                Compare and analyze different project management methodologies in one comprehensive platform
+              </p>
+            </div>
+          </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 };

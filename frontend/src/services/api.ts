@@ -84,6 +84,12 @@ export const apiService = {
     return response.data;
   },
 
+  // Get section details
+  getSection: async (id: string): Promise<any> => {
+    const response = await api.get(`/sections/${id}`);
+    return response.data;
+  },
+
   // Health check
   healthCheck: async (): Promise<{ status: string; timestamp: string }> => {
     const response = await api.get('/health');
