@@ -2,11 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
+
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
 // Middleware
 app.use(cors());
@@ -622,6 +627,303 @@ app.get('/api/sections/:id/adjacent', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch adjacent sections' });
   }
 });
+
+// 7. GET /api/comparison/topics - Get predefined comparison topics
+app.get('/api/comparison/topics', async (req, res) => {
+  try {
+    const topics = [
+      {
+        id: 1,
+        name: "Risk Management",
+        description: "Compare risk management approaches across standards",
+        keywords: ["risk", "threat", "opportunity", "mitigation", "assessment", "uncertainty", "probability", "impact"]
+      },
+      {
+        id: 2,
+        name: "Stakeholder Management", 
+        description: "Compare stakeholder engagement strategies",
+        keywords: ["stakeholder", "engagement", "communication", "expectations", "influence", "interest", "power"]
+      },
+      {
+        id: 3,
+        name: "Quality Management",
+        description: "Compare quality assurance and control processes",
+        keywords: ["quality", "assurance", "control", "verification", "validation", "testing", "review", "audit"]
+      },
+      {
+        id: 4,
+        name: "Project Planning",
+        description: "Compare project planning methodologies",
+        keywords: ["planning", "schedule", "timeline", "milestone", "deliverable", "work breakdown", "estimation"]
+      },
+      {
+        id: 5,
+        name: "Team Management",
+        description: "Compare team leadership and management approaches",
+        keywords: ["team", "leadership", "management", "motivation", "performance", "collaboration", "development"]
+      },
+      {
+        id: 6,
+        name: "Communication",
+        description: "Compare communication strategies and practices",
+        keywords: ["communication", "reporting", "meeting", "information", "documentation", "presentation"]
+      }
+    ];
+    res.json(topics);
+  } catch (error) {
+    console.error('Error fetching comparison topics:', error);
+    res.status(500).json({ error: 'Failed to fetch comparison topics' });
+  }
+});
+
+// 8. GET /api/comparison/topics/:id - Get comparison for specific topic
+app.get('/api/comparison/topics/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const topicId = parseInt(id);
+    
+    // Get topic definition
+    const topics: Record<number, { name: string; keywords: string[] }> = {
+      1: { name: "Risk Management", keywords: ["risk", "threat", "opportunity", "mitigation", "assessment", "uncertainty"] },
+      2: { name: "Stakeholder Management", keywords: ["stakeholder", "engagement", "communication", "expectations", "influence"] },
+      3: { name: "Quality Management", keywords: ["quality", "assurance", "control", "verification", "validation", "testing"] },
+      4: { name: "Project Planning", keywords: ["planning", "schedule", "timeline", "milestone", "deliverable", "estimation"] },
+      5: { name: "Team Management", keywords: ["team", "leadership", "management", "motivation", "performance", "collaboration"] },
+      6: { name: "Communication", keywords: ["communication", "reporting", "meeting", "information", "documentation"] }
+    };
+    
+    const topic = topics[topicId];
+    if (!topic) {
+      return res.status(404).json({ error: 'Topic not found' });
+    }
+    
+    // Search for relevant sections across all standards
+    const relevantSections = await findRelevantSections(topic.keywords);
+    
+    // Generate comparison data
+    const comparisonData = await generateComparisonData(relevantSections, topic);
+    
+    res.json({
+      topic,
+      comparisonData,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error generating comparison:', error);
+    res.status(500).json({ error: 'Failed to generate comparison' });
+  }
+});
+
+// Helper function to find relevant sections
+async function findRelevantSections(keywords: string[]) {
+  const allSections = await prisma.section.findMany({
+    include: {
+      standard: true,
+      chapter: true
+    }
+  });
+  
+  // Simple keyword matching with scoring
+  const relevantSections = allSections.filter(section => {
+    const searchText = `${section.title} ${section.content}`.toLowerCase();
+    return keywords.some(keyword => searchText.includes(keyword.toLowerCase()));
+  }).map(section => {
+    const searchText = `${section.title} ${section.content}`.toLowerCase();
+    let relevanceScore = 0;
+    
+    keywords.forEach(keyword => {
+      if (section.title.toLowerCase().includes(keyword.toLowerCase())) {
+        relevanceScore += 2; // Title matches are more important
+      }
+      if (section.content.toLowerCase().includes(keyword.toLowerCase())) {
+        relevanceScore += 1;
+      }
+    });
+    
+    return { ...section, relevanceScore };
+  }).sort((a, b) => b.relevanceScore - a.relevanceScore);
+  
+  return relevantSections;
+}
+
+// Generate comparison data with AI
+async function generateComparisonData(sections: any[], topic: any) {
+  // Group sections by standard
+  const sectionsByStandard = sections.reduce((acc, section) => {
+    const standardId = section.standardId;
+    if (!acc[standardId]) {
+      acc[standardId] = {
+        standard: section.standard,
+        sections: []
+      };
+    }
+    acc[standardId].sections.push(section);
+    return acc;
+  }, {});
+  
+  try {
+    // Use AI to generate insights
+    const insights = await generateAIInsights(sectionsByStandard, topic);
+    
+    // Generate summaries for each standard
+    const standardsWithSummaries = await Promise.all(
+      Object.values(sectionsByStandard).map(async (data: any) => ({
+        standardTitle: data.standard.title,
+        summary: await generateAIStandardSummary(data.sections, topic, data.standard.title),
+        relevantSections: data.sections.slice(0, 5).map((s: any) => ({
+          sectionTitle: s.title,
+          sectionId: s.id,
+          anchorId: s.anchorId,
+          sectionNumber: s.sectionNumber,
+          relevanceScore: s.relevanceScore
+        }))
+      }))
+    );
+
+    return {
+      overallSummary: insights.overallSummary,
+      standards: standardsWithSummaries,
+      keySimilarities: insights.similarities,
+      keyDifferences: insights.differences
+    };
+  } catch (error) {
+    console.error('AI generation failed, falling back to basic analysis:', error);
+    // Fallback to basic analysis if AI fails
+    const insights = generateInsights(sectionsByStandard, topic);
+    
+    return {
+      overallSummary: `Analysis of ${topic.name} across ${Object.keys(sectionsByStandard).length} standards. This comparison highlights how different project management standards approach ${topic.name.toLowerCase()}.`,
+      standards: Object.values(sectionsByStandard).map((data: any) => ({
+        standardTitle: data.standard.title,
+        summary: generateStandardSummary(data.sections, topic),
+        relevantSections: data.sections.slice(0, 5).map((s: any) => ({
+          sectionTitle: s.title,
+          sectionId: s.id,
+          anchorId: s.anchorId,
+          sectionNumber: s.sectionNumber,
+          relevanceScore: s.relevanceScore
+        }))
+      })),
+      keySimilarities: insights.similarities,
+      keyDifferences: insights.differences
+    };
+  }
+}
+
+// Generate insights about similarities and differences
+function generateInsights(sectionsByStandard: any, topic: any) {
+  const similarities = [
+    `All standards emphasize the importance of ${topic.name.toLowerCase()} in project success`,
+    `Common themes include planning, monitoring, and continuous improvement`,
+    `All approaches recognize the need for stakeholder involvement`,
+    `Risk identification and assessment are fundamental across all standards`
+  ];
+  
+  const differences = [
+    `PMBOK focuses on knowledge areas while PRINCE2 emphasizes processes`,
+    `ISO standards provide more detailed technical specifications`,
+    `PRINCE2 has a stronger emphasis on business justification`,
+    `Different terminology and frameworks are used across standards`
+  ];
+  
+  return { similarities, differences };
+}
+
+// AI-powered insights generation
+async function generateAIInsights(sectionsByStandard: any, topic: any) {
+  const standards = Object.values(sectionsByStandard);
+  const standardNames = standards.map((s: any) => s.standard.title).join(', ');
+  
+  const prompt = `
+Analyze how different project management standards approach "${topic.name}". 
+
+Standards being compared: ${standardNames}
+Topic: ${topic.name}
+Description: ${topic.description}
+
+Based on the content from these standards, provide:
+1. An overall summary (2-3 sentences) explaining how these standards approach ${topic.name.toLowerCase()}
+2. 4-5 key similarities between the standards
+3. 4-5 key differences between the standards
+
+Format your response as JSON:
+{
+  "overallSummary": "string",
+  "similarities": ["string1", "string2", "string3", "string4"],
+  "differences": ["string1", "string2", "string3", "string4"]
+}
+
+Focus on practical differences in methodology, terminology, and approach. Be specific and actionable.
+`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    // Try to parse JSON response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    
+    // Fallback if JSON parsing fails
+    return {
+      overallSummary: `Analysis of ${topic.name} across ${standards.length} standards reveals different approaches to project management.`,
+      similarities: [
+        `All standards emphasize the importance of ${topic.name.toLowerCase()} in project success`,
+        `Common themes include planning, monitoring, and continuous improvement`,
+        `All approaches recognize the need for stakeholder involvement`,
+        `Risk identification and assessment are fundamental across all standards`
+      ],
+      differences: [
+        `PMBOK focuses on knowledge areas while PRINCE2 emphasizes processes`,
+        `ISO standards provide more detailed technical specifications`,
+        `PRINCE2 has a stronger emphasis on business justification`,
+        `Different terminology and frameworks are used across standards`
+      ]
+    };
+  } catch (error) {
+    console.error('AI insights generation failed:', error);
+    throw error;
+  }
+}
+
+// AI-powered standard summary
+async function generateAIStandardSummary(sections: any[], topic: any, standardTitle: string) {
+  const sectionTitles = sections.map(s => s.title).join(', ');
+  
+  const prompt = `
+Analyze how "${standardTitle}" approaches "${topic.name}".
+
+Standard: ${standardTitle}
+Topic: ${topic.name}
+Relevant sections: ${sectionTitles}
+
+Provide a 2-3 sentence summary explaining how this specific standard approaches ${topic.name.toLowerCase()}. 
+Focus on the unique aspects, methodology, and practical approach of this standard.
+
+Be concise and specific about what makes this standard's approach distinctive.
+`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+  } catch (error) {
+    console.error('AI standard summary generation failed:', error);
+    // Fallback to basic summary
+    return generateStandardSummary(sections, topic);
+  }
+}
+
+// Generate summary for a specific standard (fallback)
+function generateStandardSummary(sections: any[], topic: any) {
+  const sectionCount = sections.length;
+  const avgRelevance = sections.reduce((sum, s) => sum + s.relevanceScore, 0) / sectionCount;
+  
+  return `This standard covers ${topic.name.toLowerCase()} across ${sectionCount} sections with an average relevance score of ${avgRelevance.toFixed(1)}. The approach emphasizes practical implementation and real-world application.`;
+}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

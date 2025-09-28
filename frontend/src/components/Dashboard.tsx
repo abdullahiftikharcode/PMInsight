@@ -160,6 +160,10 @@ const Dashboard = () => {
             <FaChartBar className="me-2" />
             <span className="label">Analytics</span>
           </Link>
+          <Link to="/comparison" className="reddit-sidebar-link">
+            <FaBook className="me-2" />
+            <span className="label">Comparison</span>
+          </Link>
           <Link to="/tutorial" className="reddit-sidebar-link">
             <FaRocket className="me-2" />
             <span className="label">Tutorial</span>
@@ -217,6 +221,10 @@ const Dashboard = () => {
               <Link to="/insights" className="reddit-nav-link">
                 <FaChartBar className="me-1" />
                 Insights
+              </Link>
+              <Link to="/comparison" className="reddit-nav-link">
+                <FaBook className="me-1" />
+                Comparison
               </Link>
               <Link to="/tutorial" className="reddit-nav-link">
                 <FaRocket className="me-1" />
