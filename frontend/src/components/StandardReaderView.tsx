@@ -62,8 +62,10 @@ const StandardReaderView = () => {
 
     try {
       setSearchLoading(true);
-      const results = await apiService.searchStandard(parseInt(id), searchQuery);
-      setSearchResults(results);
+      const response = await apiService.searchStandard(parseInt(id), searchQuery);
+      console.log('Search response:', response);
+      // The backend returns { query, results, totalFound, standard }
+      setSearchResults(response.results || []);
       setShowSearchResults(true);
     } catch (err) {
       console.error('Search error:', err);
@@ -422,9 +424,9 @@ const StandardReaderView = () => {
                                   WebkitBoxOrient: 'vertical',
                                   overflow: 'hidden',
                                   margin: 0
-                                }}>
-                                  {result.content}
-                                </p>
+                                }}
+                                dangerouslySetInnerHTML={{ __html: result.snippet || result.content || 'No content available' }}
+                                />
                               </div>
                               
                               {/* Footer Section - Fixed height */}

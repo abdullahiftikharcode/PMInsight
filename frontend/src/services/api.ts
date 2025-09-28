@@ -62,7 +62,7 @@ export const apiService = {
   },
 
   // Search within a standard
-  searchStandard: async (standardId: number, query: string): Promise<SearchResult[]> => {
+  searchStandard: async (standardId: number, query: string): Promise<any> => {
     const response = await api.post(`/standards/${standardId}/search`, { query });
     return response.data;
   },

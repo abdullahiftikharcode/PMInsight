@@ -30,7 +30,82 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
       try {
         setLoading(true);
         const searchResults = await apiService.searchAll(query);
-        setResults(searchResults);
+        
+        // Flatten the grouped results into individual sections
+        const flattenedSections = searchResults.results.flatMap((group: any) => 
+          group.sections.map((section: any) => {
+            // Calculate improved similarity score based on text matching
+            const queryLower = query.toLowerCase();
+            const titleLower = section.title?.toLowerCase() || '';
+            const contentLower = section.content?.toLowerCase() || '';
+            const fullTitleLower = section.fullTitle?.toLowerCase() || '';
+            
+            // Calculate match scores with better logic
+            let titleMatch = 0;
+            let contentMatch = 0;
+            let fullTitleMatch = 0;
+            
+            // Title match - higher score for exact matches
+            if (titleLower.includes(queryLower)) {
+              if (titleLower === queryLower) {
+                titleMatch = 0.95; // Exact title match
+              } else if (titleLower.startsWith(queryLower)) {
+                titleMatch = 0.9; // Title starts with query
+              } else {
+                titleMatch = 0.8; // Title contains query
+              }
+            }
+            
+            // Full title match
+            if (fullTitleLower.includes(queryLower)) {
+              if (fullTitleLower === queryLower) {
+                fullTitleMatch = 0.9; // Exact full title match
+              } else {
+                fullTitleMatch = 0.75; // Full title contains query
+              }
+            }
+            
+            // Content match - check for multiple occurrences
+            if (contentLower.includes(queryLower)) {
+              const occurrences = (contentLower.match(new RegExp(queryLower, 'g')) || []).length;
+              contentMatch = Math.min(0.7 + (occurrences * 0.05), 0.85); // Higher score for multiple matches
+            }
+            
+            // Use the highest match score
+            const similarity = Math.max(titleMatch, contentMatch, fullTitleMatch);
+            
+            // Debug logging for similarity scores
+            if (similarity > 0) {
+              console.log(`Section: ${section.title}, Similarity: ${(similarity * 100).toFixed(1)}%`, {
+                titleMatch: (titleMatch * 100).toFixed(1),
+                contentMatch: (contentMatch * 100).toFixed(1),
+                fullTitleMatch: (fullTitleMatch * 100).toFixed(1)
+              });
+            }
+            
+            return {
+              ...section,
+              standardTitle: group.standard.title,
+              standardType: group.standard.type,
+              standardVersion: group.standard.version,
+              similarity: similarity
+            };
+          })
+        );
+        
+        // Sort by similarity score (highest first)
+        const sortedSections = flattenedSections.sort((a: any, b: any) => b.similarity - a.similarity);
+        
+        setResults({
+          ...searchResults,
+          results: sortedSections,
+          // Update counts to match flattened results
+          totalResults: sortedSections.length,
+          searchMetadata: {
+            ...searchResults.searchMetadata,
+            totalSections: sortedSections.length
+          }
+        });
       } catch (err) {
         setError('Search failed. Please try again.');
         console.error('Search error:', err);
@@ -200,19 +275,19 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
                   </div>
                   <div className="col-md-3">
                     <div className="reddit-text-primary fw-bold fs-3" style={{color: 'var(--reddit-blue)'}}>
-                      {results.standardsSearched}
+                      {results.searchMetadata?.searchedStandards?.length || 0}
                     </div>
                     <div className="reddit-text-secondary small">Standards Searched</div>
                   </div>
                   <div className="col-md-3">
                     <div className="reddit-text-primary fw-bold fs-3" style={{color: 'var(--reddit-orange)'}}>
-                      {results.sectionsFound}
+                      {results.searchMetadata?.totalSections || 0}
                     </div>
                     <div className="reddit-text-secondary small">Sections Found</div>
                   </div>
                   <div className="col-md-3">
                     <div className="reddit-text-primary fw-bold fs-3" style={{color: 'var(--reddit-blue)'}}>
-                      {results.averageWords}
+                      {results.searchMetadata?.averageWordCount || 0}
                     </div>
                     <div className="reddit-text-secondary small">Avg Words</div>
                   </div>
@@ -227,51 +302,45 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
               {results.results.map((result: any, index: number) => (
                 <div key={result.id} className="col-12">
                   <div className="reddit-card search-result-card reddit-fade-in" style={{animationDelay: `${index * 0.1}s`}}>
-                    <Link 
-                      to={`/section/${result.id}`}
-                      className="text-decoration-none"
-                      style={{color: 'inherit'}}
-                    >
                       <div className="reddit-card-body">
                         <div className="d-flex justify-content-between align-items-start mb-3">
                           <div className="flex-grow-1">
-                            <h3 className="h5 fw-bold reddit-text-primary mb-2 hover-text-primary">
-                              {result.sectionNumber || 'N/A'} {result.title || 'Untitled'}
+                          <h3 className="h5 fw-bold reddit-text-primary mb-2">
+                            {result.sectionNumber || 'N/A'} {result.title || 'Untitled'}
                             </h3>
                             <div className="d-flex align-items-center reddit-text-secondary mb-2">
                               <FaBook className="me-2" />
-                              <span className="fw-medium">{result.standardTitle || 'Unknown Standard'}</span>
+                            <span className="fw-medium">{result.standardTitle || 'Unknown Standard'}</span>
                             </div>
                             <div className="reddit-text-muted small">
-                              Section ID: {result.anchorId || 'N/A'}
+                            Section ID: {result.anchorId || 'N/A'}
                             </div>
                           </div>
                           <div className="text-end">
                             <div className="reddit-status">
                               <div className="reddit-status-dot"></div>
-                              <span>{result.similarity ? (result.similarity * 100).toFixed(1) : '0.0'}% match</span>
+                            <span>{result.similarity ? (result.similarity * 100).toFixed(1) : '0.0'}% match</span>
                             </div>
                           </div>
                         </div>
                         
                         <div className="reddit-text-secondary mb-3">
                           <p>
-                            {result.content ? result.content.substring(0, 300) : 'No content available'}
-                            {result.content && result.content.length > 300 && '...'}
+                          {result.content ? result.content.substring(0, 300) : 'No content available'}
+                          {result.content && result.content.length > 300 && '...'}
                           </p>
                         </div>
                         
                         <div className="d-flex justify-content-between align-items-center">
                           <div className="reddit-text-muted small">
-                            <strong>Similarity:</strong> {result.similarity ? (result.similarity * 100).toFixed(1) : '0.0'}%
+                          <strong>Similarity:</strong> {result.similarity ? (result.similarity * 100).toFixed(1) : '0.0'}%
                           </div>
-                          <div className="btn-reddit btn-sm">
+                        <Link to={`/section/${result.id}`} className="btn-reddit btn-sm">
                             <FaEye className="me-1" />
                             View Section
+                        </Link>
                           </div>
                         </div>
-                      </div>
-                    </Link>
                   </div>
                 </div>
               ))}
