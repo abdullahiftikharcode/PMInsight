@@ -94,16 +94,21 @@ const StandardReaderView = () => {
     try {
       setBookmarksLoading(true);
       
-      // Get all sections for this standard and filter by bookmarks
-      const allSections = standard?.sections || [];
-      const bookmarkedSectionIds = Array.from(bookmarks);
+      // Fetch details for each bookmarked section (regardless of standard)
+      const sectionPromises = Array.from(bookmarks).map(async (sectionId) => {
+        try {
+          const section = await apiService.getSection(sectionId);
+          return section;
+        } catch (err) {
+          console.error(`Error fetching section ${sectionId}:`, err);
+          return null;
+        }
+      });
+
+      const sections = await Promise.all(sectionPromises);
+      const validSections = sections.filter(section => section !== null);
       
-      // Filter sections that are both in this standard and bookmarked
-      const filteredSections = allSections.filter((section: any) => 
-        bookmarkedSectionIds.includes(section.id.toString())
-      );
-      
-      setBookmarkedSections(filteredSections);
+      setBookmarkedSections(validSections);
     } catch (err) {
       console.error('Error fetching bookmarked sections:', err);
     } finally {
@@ -642,7 +647,7 @@ const StandardReaderView = () => {
             <div className="reddit-modal-header">
               <h3 className="h5 fw-bold reddit-text-primary mb-0">
                 <FaBookmark className="me-2 text-warning" />
-                Bookmarked Sections
+                All Bookmarked Sections
               </h3>
               <button
                 onClick={() => setShowBookmarks(false)}
@@ -663,9 +668,9 @@ const StandardReaderView = () => {
               ) : bookmarkedSections.length === 0 ? (
                 <div className="text-center py-4">
                   <FaBookmark className="display-4 reddit-text-muted mb-3" />
-                  <h4 className="h6 fw-bold reddit-text-primary mb-2">No Bookmarks in This Standard</h4>
+                  <h4 className="h6 fw-bold reddit-text-primary mb-2">No Bookmarks Yet</h4>
                   <p className="reddit-text-secondary">
-                    You haven't bookmarked any sections from this standard yet.
+                    Start bookmarking sections to save them for later reading.
                   </p>
                 </div>
               ) : (
@@ -682,6 +687,12 @@ const StandardReaderView = () => {
                               <div className="reddit-text-muted small">
                                 Section ID: {section.anchorId}
                               </div>
+                              {section.standard && (
+                                <div className="reddit-text-muted small mt-1">
+                                  <FaBook className="me-1" />
+                                  {section.standard.title}
+                                </div>
+                              )}
                             </div>
                             <button
                               onClick={() => toggleBookmark(section.id)}
@@ -713,15 +724,28 @@ const StandardReaderView = () => {
                               <FaBookmark className="me-1 text-warning" />
                               Bookmarked
                             </div>
-                            <Link 
-                              to={`/section/${section.id}`}
-                              className="btn-reddit btn-sm"
-                              style={{fontSize: '0.8rem', padding: '4px 8px'}}
-                              onClick={() => setShowBookmarks(false)}
-                            >
-                              <FaEye className="me-1" style={{fontSize: '0.7rem'}} />
-                              Read Section
-                            </Link>
+                            <div className="d-flex gap-2">
+                              {section.standardId && (
+                                <Link 
+                                  to={`/standard/${section.standardId}`}
+                                  className="btn btn-outline-secondary btn-sm"
+                                  style={{fontSize: '0.8rem', padding: '4px 8px'}}
+                                  onClick={() => setShowBookmarks(false)}
+                                >
+                                  <FaBook className="me-1" style={{fontSize: '0.7rem'}} />
+                                  Standard
+                                </Link>
+                              )}
+                              <Link 
+                                to={`/section/${section.id}`}
+                                className="btn-reddit btn-sm"
+                                style={{fontSize: '0.8rem', padding: '4px 8px'}}
+                                onClick={() => setShowBookmarks(false)}
+                              >
+                                <FaEye className="me-1" style={{fontSize: '0.7rem'}} />
+                                Read Section
+                              </Link>
+                            </div>
                           </div>
                         </div>
                       </div>
