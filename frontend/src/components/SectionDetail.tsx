@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiService } from '../services/api';
+import { useBookmarks } from '../hooks/useBookmarks';
 import { 
   FaBook, 
   FaArrowLeft, 
@@ -13,7 +14,8 @@ import {
   FaChartBar,
   FaRocket,
   FaChevronLeft,
-  FaChevronRight
+  FaChevronRight,
+  FaBookmark
 } from 'react-icons/fa';
 
 const SectionDetail = () => {
@@ -22,6 +24,7 @@ const SectionDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [adjacentSections, setAdjacentSections] = useState<{prev: any, next: any} | null>(null);
+  const { toggleBookmark, isBookmarked } = useBookmarks();
 
   const fetchAdjacentSections = async (sectionId: string) => {
     try {
@@ -168,6 +171,10 @@ const SectionDetail = () => {
             <FaEye className="me-2" />
             Section ID: {section.anchorId}
           </div>
+          <div className="reddit-sidebar-link">
+            <FaBookmark className={`me-2 ${isBookmarked(section.id) ? 'text-warning' : ''}`} />
+            {isBookmarked(section.id) ? 'Bookmarked' : 'Not bookmarked'}
+          </div>
           {adjacentSections && (
             <div className="reddit-text-muted small mt-2">
               <div>{adjacentSections.prev ? 'Previous section available' : 'First section'}</div>
@@ -235,10 +242,19 @@ const SectionDetail = () => {
         <div className="reddit-content">
           {/* Section Content */}
           <div className="reddit-card reddit-fade-in">
-            <div className="reddit-card-header">
+            <div className="reddit-card-header d-flex justify-content-between align-items-center">
               <h2 className="h4 fw-bold reddit-text-primary mb-0">
                 {section.sectionNumber} {section.title}
               </h2>
+              <button
+                onClick={() => toggleBookmark(section.id)}
+                className="btn btn-outline-secondary btn-sm"
+                style={{fontSize: '0.75rem', padding: '4px 8px'}}
+                title={isBookmarked(section.id) ? 'Remove bookmark' : 'Add bookmark'}
+              >
+                <FaBookmark className={isBookmarked(section.id) ? 'text-warning' : ''} 
+                           style={{fontSize: '0.7rem'}} />
+              </button>
             </div>
             <div className="reddit-card-body">
               <div className="reddit-text-secondary mb-4">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiService, type StandardDetail, type SearchResult } from '../services/api';
+import { useBookmarks } from '../hooks/useBookmarks';
 import { 
   FaSearch, 
   FaBook, 
@@ -26,11 +27,14 @@ const StandardReaderView = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
+  const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [paginationLoading, setPaginationLoading] = useState(false);
   const [tocCurrentPage, setTocCurrentPage] = useState(1);
+  const [showBookmarks, setShowBookmarks] = useState(false);
+  const [bookmarkedSections, setBookmarkedSections] = useState<any[]>([]);
+  const [bookmarksLoading, setBookmarksLoading] = useState(false);
 
   useEffect(() => {
     const fetchStandard = async () => {
@@ -81,18 +85,37 @@ const StandardReaderView = () => {
     setSearchQuery('');
   };
 
-  const toggleBookmark = (sectionId: number) => {
-    setBookmarks(prev => {
-      const newBookmarks = new Set(prev);
-      const sectionIdStr = sectionId.toString();
-      if (newBookmarks.has(sectionIdStr)) {
-        newBookmarks.delete(sectionIdStr);
-      } else {
-        newBookmarks.add(sectionIdStr);
-      }
-      return newBookmarks;
-    });
+  const fetchBookmarkedSections = async () => {
+    if (bookmarks.size === 0) {
+      setBookmarkedSections([]);
+      return;
+    }
+
+    try {
+      setBookmarksLoading(true);
+      
+      // Get all sections for this standard and filter by bookmarks
+      const allSections = standard?.sections || [];
+      const bookmarkedSectionIds = Array.from(bookmarks);
+      
+      // Filter sections that are both in this standard and bookmarked
+      const filteredSections = allSections.filter((section: any) => 
+        bookmarkedSectionIds.includes(section.id.toString())
+      );
+      
+      setBookmarkedSections(filteredSections);
+    } catch (err) {
+      console.error('Error fetching bookmarked sections:', err);
+    } finally {
+      setBookmarksLoading(false);
+    }
   };
+
+  const handleShowBookmarks = () => {
+    setShowBookmarks(true);
+    fetchBookmarkedSections();
+  };
+
 
   const handleTocNavigation = async (page: number) => {
     if (!id || page === tocCurrentPage) return;
@@ -246,7 +269,7 @@ const StandardReaderView = () => {
           {standard.pagination && (
             <div className="reddit-text-muted small mb-2">
               Page {standard.pagination.currentPage} of {standard.pagination.totalPages}
-            </div>
+          </div>
           )}
           
           <div style={{maxHeight: '400px', overflowY: 'auto'}}>
@@ -306,6 +329,19 @@ const StandardReaderView = () => {
               </button>
             </div>
           )}
+        </div>
+                          
+        <div className="reddit-sidebar-section">
+          <div className="reddit-sidebar-title">Bookmarks</div>
+          <button 
+            onClick={handleShowBookmarks}
+            className="reddit-sidebar-link btn btn-link text-start p-0 w-100"
+            style={{fontSize: '0.9rem', textDecoration: 'none'}}
+            disabled={bookmarks.size === 0}
+          >
+            <FaBookmark className="me-2 text-warning" />
+            {bookmarks.size} bookmarked sections
+          </button>
         </div>
                           
         <div className="reddit-sidebar-section">
@@ -502,9 +538,9 @@ const StandardReaderView = () => {
                               }}
                               className="btn btn-outline-secondary btn-sm"
                               style={{fontSize: '0.75rem', padding: '4px 8px'}}
-                              title={bookmarks.has(section.id.toString()) ? 'Remove bookmark' : 'Add bookmark'}
+                              title={isBookmarked(section.id) ? 'Remove bookmark' : 'Add bookmark'}
                             >
-                              <FaBookmark className={bookmarks.has(section.id.toString()) ? 'text-warning' : ''} 
+                              <FaBookmark className={isBookmarked(section.id) ? 'text-warning' : ''} 
                                          style={{fontSize: '0.7rem'}} />
                             </button>
                           </div>
@@ -598,6 +634,105 @@ const StandardReaderView = () => {
           )}
         </div>
       </div>
+
+      {/* Bookmarks Modal */}
+      {showBookmarks && (
+        <div className="reddit-overlay">
+          <div className="reddit-modal">
+            <div className="reddit-modal-header">
+              <h3 className="h5 fw-bold reddit-text-primary mb-0">
+                <FaBookmark className="me-2 text-warning" />
+                Bookmarked Sections
+              </h3>
+              <button
+                onClick={() => setShowBookmarks(false)}
+                className="btn btn-outline-secondary btn-sm"
+                style={{fontSize: '0.75rem', padding: '4px 8px'}}
+              >
+                <FaTimes style={{fontSize: '0.7rem'}} />
+              </button>
+            </div>
+            <div className="reddit-modal-body">
+              {bookmarksLoading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-3 reddit-text-secondary">Loading bookmarks...</p>
+                </div>
+              ) : bookmarkedSections.length === 0 ? (
+                <div className="text-center py-4">
+                  <FaBookmark className="display-4 reddit-text-muted mb-3" />
+                  <h4 className="h6 fw-bold reddit-text-primary mb-2">No Bookmarks in This Standard</h4>
+                  <p className="reddit-text-secondary">
+                    You haven't bookmarked any sections from this standard yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="row">
+                  {bookmarkedSections.map((section) => (
+                    <div key={section.id} className="col-md-6 mb-3">
+                      <div className="reddit-card reddit-fade-in h-100">
+                        <div className="reddit-card-body d-flex flex-column">
+                          <div className="d-flex justify-content-between align-items-start mb-3">
+                            <div className="flex-grow-1">
+                              <h4 className="h6 fw-bold reddit-text-primary mb-1">
+                                {section.sectionNumber} {section.title}
+                              </h4>
+                              <div className="reddit-text-muted small">
+                                Section ID: {section.anchorId}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => toggleBookmark(section.id)}
+                              className="btn btn-outline-danger btn-sm"
+                              style={{fontSize: '0.75rem', padding: '4px 8px'}}
+                              title="Remove bookmark"
+                            >
+                              <FaTimes style={{fontSize: '0.7rem'}} />
+                            </button>
+                          </div>
+                          
+                          <div className="reddit-text-secondary flex-grow-1 mb-3">
+                            <p style={{
+                              fontSize: '0.85rem',
+                              lineHeight: '1.4',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              margin: 0
+                            }}>
+                              {section.content ? section.content.substring(0, 200) : 'No content available'}
+                              {section.content && section.content.length > 200 && '...'}
+                            </p>
+                          </div>
+                          
+                          <div className="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
+                            <div className="reddit-text-muted small">
+                              <FaBookmark className="me-1 text-warning" />
+                              Bookmarked
+                            </div>
+                            <Link 
+                              to={`/section/${section.id}`}
+                              className="btn-reddit btn-sm"
+                              style={{fontSize: '0.8rem', padding: '4px 8px'}}
+                              onClick={() => setShowBookmarks(false)}
+                            >
+                              <FaEye className="me-1" style={{fontSize: '0.7rem'}} />
+                              Read Section
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
