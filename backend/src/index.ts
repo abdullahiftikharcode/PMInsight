@@ -551,6 +551,7 @@ app.get('/api/insights', async (req, res) => {
 
     res.json({
       standards: standards,
+      totalStandards: standards.length,
       totalSections: standards.reduce((sum: number, s: any) => sum + s._count.sections, 0),
       totalChapters: standards.reduce((sum: number, s: any) => sum + s._count.chapters, 0),
       totalWords: totalWords._sum.wordCount || 0,
@@ -565,6 +566,60 @@ app.get('/api/insights', async (req, res) => {
       error: 'Failed to generate insights',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
+  }
+});
+
+// 4. GET /api/sections/:id/adjacent - Get adjacent sections for navigation
+app.get('/api/sections/:id/adjacent', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get the current section
+    const currentSection = await prisma.section.findUnique({
+      where: { id: parseInt(id) },
+      select: {
+        id: true,
+        sectionNumber: true,
+        standardId: true,
+      },
+    });
+
+    if (!currentSection) {
+      return res.status(404).json({ error: 'Section not found' });
+    }
+
+    // Get all sections from the same standard, ordered by section number
+    const allSections = await prisma.section.findMany({
+      where: { standardId: currentSection.standardId },
+      select: {
+        id: true,
+        sectionNumber: true,
+        title: true,
+      },
+      orderBy: { sectionNumber: 'asc' },
+    });
+
+    // Find current section index
+    const currentIndex = allSections.findIndex(s => s.id === currentSection.id);
+    
+    if (currentIndex === -1) {
+      return res.status(404).json({ error: 'Section not found in standard' });
+    }
+
+    // Get adjacent sections
+    const prev = currentIndex > 0 ? allSections[currentIndex - 1] : null;
+    const next = currentIndex < allSections.length - 1 ? allSections[currentIndex + 1] : null;
+
+    res.json({
+      current: currentSection,
+      prev,
+      next,
+      totalSections: allSections.length,
+      currentPosition: currentIndex + 1,
+    });
+  } catch (error) {
+    console.error('Error fetching adjacent sections:', error);
+    res.status(500).json({ error: 'Failed to fetch adjacent sections' });
   }
 });
 

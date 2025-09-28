@@ -126,7 +126,7 @@ const InsightsDashboard = () => {
               <div className="row text-center mb-3">
                 <div className="col-6">
                   <div className="fw-bold fs-4" style={{ color: 'var(--reddit-orange)' }}>
-                    {standard.sectionCount}
+                    {standard._count?.sections || 0}
                   </div>
                   <div className="reddit-text-secondary small text-uppercase">
                     Sections
@@ -134,10 +134,10 @@ const InsightsDashboard = () => {
                 </div>
                 <div className="col-6">
                   <div className="fw-bold fs-4" style={{ color: 'var(--reddit-blue)' }}>
-                    {standard.wordCount?.toLocaleString() || 0}
+                    {standard._count?.chapters || 0}
                   </div>
                   <div className="reddit-text-secondary small text-uppercase">
-                    Words
+                    Chapters
                   </div>
                 </div>
               </div>
@@ -145,15 +145,15 @@ const InsightsDashboard = () => {
               {/* Details */}
               <div className="row text-center border-top pt-3">
                 <div className="col-6">
-                  <div className="reddit-text-secondary small">Avg Words / Section</div>
+                  <div className="reddit-text-secondary small">Type</div>
                   <div className="fw-bold reddit-text-primary fs-6">
-                    {standard.averageWordsPerSection?.toFixed(0) || 0}
+                    {standard.type || 'N/A'}
                   </div>
                 </div>
                 <div className="col-6">
-                  <div className="reddit-text-secondary small">Words / Section</div>
+                  <div className="reddit-text-secondary small">Version</div>
                   <div className="fw-bold reddit-text-primary fs-6">
-                    {standard.wordsPerSection?.toFixed(0) || 0}
+                    {standard.version || 'N/A'}
                   </div>
                 </div>
               </div>
@@ -179,11 +179,13 @@ const InsightsDashboard = () => {
                     <div className="reddit-card insights-card h-100">
                       <div className="reddit-card-body d-flex flex-column justify-content-between">
                         <h4 className="h6 fw-bold reddit-text-primary mb-2">
-                          {topic.name}
+                          {topic.topic}
                         </h4>
-                        <p className="reddit-text-secondary small mb-3">{topic.description}</p>
+                        <p className="reddit-text-secondary small mb-3">
+                          Found in {topic.standards} standards
+                        </p>
                         <div className="reddit-text-muted small">
-                          <strong>Coverage:</strong> {topic.coverage}%
+                          <strong>Coverage:</strong> {topic.coverage} sections
                         </div>
                       </div>
                     </div>

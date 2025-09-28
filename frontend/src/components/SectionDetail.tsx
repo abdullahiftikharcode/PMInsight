@@ -11,7 +11,9 @@ import {
   FaCog,
   FaUsers,
   FaChartBar,
-  FaRocket
+  FaRocket,
+  FaChevronLeft,
+  FaChevronRight
 } from 'react-icons/fa';
 
 const SectionDetail = () => {
@@ -19,6 +21,24 @@ const SectionDetail = () => {
   const [section, setSection] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [adjacentSections, setAdjacentSections] = useState<{prev: any, next: any} | null>(null);
+
+  const fetchAdjacentSections = async (sectionId: string) => {
+    try {
+      console.log('Fetching adjacent sections for section:', sectionId);
+      const adjacentData = await apiService.getAdjacentSections(sectionId);
+      console.log('Adjacent sections data:', adjacentData);
+      
+      if (adjacentData) {
+        setAdjacentSections({
+          prev: adjacentData.prev,
+          next: adjacentData.next
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching adjacent sections:', err);
+    }
+  };
 
   useEffect(() => {
     const fetchSection = async () => {
@@ -30,6 +50,8 @@ const SectionDetail = () => {
         const sectionData = await apiService.getSection(id);
         if (sectionData) {
           setSection(sectionData);
+          // Fetch adjacent sections using the new API
+          await fetchAdjacentSections(id);
         } else {
           setError('Section not found');
         }
@@ -146,6 +168,12 @@ const SectionDetail = () => {
             <FaEye className="me-2" />
             Section ID: {section.anchorId}
           </div>
+          {adjacentSections && (
+            <div className="reddit-text-muted small mt-2">
+              <div>{adjacentSections.prev ? 'Previous section available' : 'First section'}</div>
+              <div>{adjacentSections.next ? 'Next section available' : 'Last section'}</div>
+            </div>
+          )}
         </div>
 
         <div className="reddit-sidebar-section">
@@ -254,7 +282,7 @@ const SectionDetail = () => {
             </div>
           </div>
 
-          {/* Navigation */}
+          {/* Section Navigation */}
           <div className="reddit-pagination">
             {section.standardId && (
               <Link to={`/standard/${section.standardId}`} className="reddit-pagination-btn">
@@ -262,6 +290,29 @@ const SectionDetail = () => {
                 Back to Standard
               </Link>
             )}
+            
+            {/* Previous Section */}
+            {adjacentSections?.prev && (
+              <Link 
+                to={`/section/${adjacentSections.prev.id}`}
+                className="reddit-pagination-btn"
+              >
+                <FaChevronLeft className="me-1" />
+                Previous: {adjacentSections.prev.sectionNumber}
+              </Link>
+            )}
+            
+            {/* Next Section */}
+            {adjacentSections?.next && (
+              <Link 
+                to={`/section/${adjacentSections.next.id}`}
+                className="reddit-pagination-btn"
+              >
+                Next: {adjacentSections.next.sectionNumber}
+                <FaChevronRight className="ms-1" />
+              </Link>
+            )}
+            
             <Link to="/standards" className="reddit-pagination-btn">
               <FaList className="me-1" />
               All Standards

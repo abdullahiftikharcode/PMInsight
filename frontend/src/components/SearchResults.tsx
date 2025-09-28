@@ -236,34 +236,34 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
                         <div className="d-flex justify-content-between align-items-start mb-3">
                           <div className="flex-grow-1">
                             <h3 className="h5 fw-bold reddit-text-primary mb-2 hover-text-primary">
-                              {result.sectionNumber} {result.title}
+                              {result.sectionNumber || 'N/A'} {result.title || 'Untitled'}
                             </h3>
                             <div className="d-flex align-items-center reddit-text-secondary mb-2">
                               <FaBook className="me-2" />
-                              <span className="fw-medium">{result.standardTitle}</span>
+                              <span className="fw-medium">{result.standardTitle || 'Unknown Standard'}</span>
                             </div>
                             <div className="reddit-text-muted small">
-                              Section ID: {result.anchorId}
+                              Section ID: {result.anchorId || 'N/A'}
                             </div>
                           </div>
                           <div className="text-end">
                             <div className="reddit-status">
                               <div className="reddit-status-dot"></div>
-                              <span>{(result.similarity * 100).toFixed(1)}% match</span>
+                              <span>{result.similarity ? (result.similarity * 100).toFixed(1) : '0.0'}% match</span>
                             </div>
                           </div>
                         </div>
                         
                         <div className="reddit-text-secondary mb-3">
                           <p>
-                            {result.content.substring(0, 300)}
-                            {result.content.length > 300 && '...'}
+                            {result.content ? result.content.substring(0, 300) : 'No content available'}
+                            {result.content && result.content.length > 300 && '...'}
                           </p>
                         </div>
                         
                         <div className="d-flex justify-content-between align-items-center">
                           <div className="reddit-text-muted small">
-                            <strong>Similarity:</strong> {(result.similarity * 100).toFixed(1)}%
+                            <strong>Similarity:</strong> {result.similarity ? (result.similarity * 100).toFixed(1) : '0.0'}%
                           </div>
                           <div className="btn-reddit btn-sm">
                             <FaEye className="me-1" />

@@ -90,6 +90,12 @@ export const apiService = {
     return response.data;
   },
 
+  // Get adjacent sections for navigation
+  getAdjacentSections: async (id: string): Promise<any> => {
+    const response = await api.get(`/sections/${id}/adjacent`);
+    return response.data;
+  },
+
   // Health check
   healthCheck: async (): Promise<{ status: string; timestamp: string }> => {
     const response = await api.get('/health');

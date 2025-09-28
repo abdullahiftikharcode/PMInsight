@@ -30,6 +30,7 @@ const StandardReaderView = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [paginationLoading, setPaginationLoading] = useState(false);
+  const [tocCurrentPage, setTocCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetchStandard = async () => {
@@ -89,6 +90,24 @@ const StandardReaderView = () => {
       }
       return newBookmarks;
     });
+  };
+
+  const handleTocNavigation = async (page: number) => {
+    if (!id || page === tocCurrentPage) return;
+    
+    try {
+      setPaginationLoading(true);
+      const standardData = await apiService.getStandard(parseInt(id), page);
+      if (standardData) {
+        setStandard(standardData);
+        setTocCurrentPage(page);
+      }
+    } catch (err) {
+      console.error('Error loading TOC page:', err);
+      setError('Failed to load table of contents page');
+    } finally {
+      setPaginationLoading(false);
+    }
   };
 
   if (loading) {
@@ -218,8 +237,16 @@ const StandardReaderView = () => {
           <div className="reddit-sidebar-title">Table of Contents</div>
           <div className="reddit-sidebar-link">
             <FaList className="me-2" />
-            {standard.sections.length} sections
+            {standard.pagination?.totalSections || standard.sections.length} sections
           </div>
+          
+          {/* TOC Page Info */}
+          {standard.pagination && (
+            <div className="reddit-text-muted small mb-2">
+              Page {standard.pagination.currentPage} of {standard.pagination.totalPages}
+            </div>
+          )}
+          
           <div style={{maxHeight: '400px', overflowY: 'auto'}}>
             {standard.sections.map((section) => (
               <div key={section.id} className="reddit-list-item">
@@ -252,6 +279,31 @@ const StandardReaderView = () => {
               </div>
             ))}
           </div>
+          
+          {/* TOC Navigation Controls */}
+          {standard.pagination && standard.pagination.totalPages > 1 && (
+            <div className="reddit-pagination mt-3" style={{justifyContent: 'center', gap: '8px'}}>
+              <button 
+                className="reddit-pagination-btn"
+                disabled={!standard.pagination.hasPrevPage || paginationLoading}
+                onClick={() => standard.pagination && handleTocNavigation(standard.pagination.currentPage - 1)}
+                style={{fontSize: '0.75rem', padding: '4px 8px'}}
+              >
+                <FaChevronLeft style={{fontSize: '0.7rem'}} />
+              </button>
+              <span className="reddit-text-secondary" style={{fontSize: '0.75rem'}}>
+                {standard.pagination.currentPage} of {standard.pagination.totalPages}
+              </span>
+              <button 
+                className="reddit-pagination-btn"
+                disabled={!standard.pagination.hasNextPage || paginationLoading}
+                onClick={() => standard.pagination && handleTocNavigation(standard.pagination?.currentPage + 1)}
+                style={{fontSize: '0.75rem', padding: '4px 8px'}}
+              >
+                <FaChevronRight style={{fontSize: '0.7rem'}} />
+              </button>
+            </div>
+          )}
         </div>
                           
         <div className="reddit-sidebar-section">
@@ -283,7 +335,7 @@ const StandardReaderView = () => {
                 <p className="reddit-text-secondary mb-0">
                   {showSearchResults 
                     ? `${searchResults.length} search results for "${searchQuery}"`
-                    : `${standard.sections.length} sections`
+                    : `${standard.pagination?.totalSections || standard.sections.length} sections`
                   }
                 </p>
               </div>
