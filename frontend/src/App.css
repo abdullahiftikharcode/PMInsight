@@ -1,9 +1,5 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
+/* Remove app-level width cap to allow full-width layout pages */
+#root { padding: 0; max-width: none; text-align: initial; }
 
 .logo {
   height: 6em;

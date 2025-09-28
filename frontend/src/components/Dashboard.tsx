@@ -12,7 +12,9 @@ import {
   FaArrowRight,
   FaHome,
   FaCog,
-  FaUsers
+  FaUsers,
+  FaAngleDoubleLeft,
+  FaAngleDoubleRight
 } from 'react-icons/fa';
 
 const Dashboard = () => {
@@ -22,6 +24,7 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchParams] = useSearchParams();
+  const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -127,27 +130,39 @@ const Dashboard = () => {
   return (
     <div className="reddit-layout">
       {/* Reddit-Style Sidebar */}
-      <div className="reddit-sidebar">
+      <div className={`reddit-sidebar${isCollapsed ? ' collapsed' : ''}`}>
         <div className="reddit-sidebar-section">
-          <div className="reddit-nav-brand">
+          <Link to="/" className="reddit-nav-brand">
             <FaRocket />
-            PMInsight
-          </div>
+            <span className="label">PMInsight</span>
+          </Link>
+          <button
+            className="sidebar-toggle"
+            onClick={() => {
+              const next = !isCollapsed;
+              setIsCollapsed(next);
+              localStorage.setItem('sidebarCollapsed', String(next));
+            }}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={isCollapsed ? 'Expand' : 'Collapse'}
+          >
+            {isCollapsed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
+          </button>
         </div>
         
         <div className="reddit-sidebar-section">
           <div className="reddit-sidebar-title">Navigation</div>
           <Link to="/" className="reddit-sidebar-link">
             <FaHome className="me-2" />
-            Home
+            <span className="label">Home</span>
           </Link>
           <Link to="/insights" className="reddit-sidebar-link">
             <FaChartBar className="me-2" />
-            Analytics
+            <span className="label">Analytics</span>
           </Link>
           <Link to="/tutorial" className="reddit-sidebar-link">
             <FaRocket className="me-2" />
-            Tutorial
+            <span className="label">Tutorial</span>
           </Link>
         </div>
 
@@ -155,11 +170,11 @@ const Dashboard = () => {
           <div className="reddit-sidebar-title">Quick Actions</div>
           <div className="reddit-sidebar-link">
             <FaSearch className="me-2" />
-            Search Standards
+            <span className="label">Search Standards</span>
           </div>
           <div className="reddit-sidebar-link">
             <FaBook className="me-2" />
-            Browse Library
+            <span className="label">Browse Library</span>
           </div>
         </div>
 
@@ -172,7 +187,7 @@ const Dashboard = () => {
               className="reddit-sidebar-link"
             >
               <FaBook className="me-2" />
-              {standard.title}
+              <span className="label">{standard.title}</span>
             </Link>
           ))}
         </div>
@@ -181,23 +196,19 @@ const Dashboard = () => {
           <div className="reddit-sidebar-title">Tools</div>
           <div className="reddit-sidebar-link">
             <FaCog className="me-2" />
-            Settings
+            <span className="label">Settings</span>
           </div>
           <div className="reddit-sidebar-link">
             <FaUsers className="me-2" />
-            Community
+            <span className="label">Community</span>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="reddit-main">
+      <div className={`reddit-main${isCollapsed ? ' collapsed' : ''}`}>
         <div className="reddit-nav">
           <div className="container d-flex justify-content-between align-items-center">
-            <Link to="/" className="reddit-nav-brand">
-              <FaRocket />
-              PMInsight
-            </Link>
             <div className="reddit-nav-links">
               <Link to="/" className="reddit-nav-link">
                 <FaHome className="me-1" />

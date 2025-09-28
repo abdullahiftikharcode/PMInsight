@@ -9,7 +9,6 @@ import {
   FaArrowLeft,
   FaPlay,
   FaHome,
-  FaCheckCircle,
   FaGlobe,
   FaCrown,
   FaBalanceScale,
@@ -19,6 +18,7 @@ import {
 
 const TutorialPage = () => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
 
   const tutorialSteps = [
     {
@@ -235,65 +235,57 @@ const TutorialPage = () => {
   return (
     <div className="reddit-layout">
       {/* Reddit-Style Sidebar */}
-      <div className="reddit-sidebar">
+        <div className={`reddit-sidebar${isCollapsed ? ' collapsed' : ''}`}>
         <div className="reddit-sidebar-section">
-          <div className="reddit-nav-brand">
-            <FaRocket />
-            PMInsight
-          </div>
+            <Link to="/" className="reddit-nav-brand">
+              <FaRocket />
+              <span className="label">PMInsight</span>
+            </Link>
+            <button
+              className="sidebar-toggle"
+              onClick={() => { const next = !isCollapsed; setIsCollapsed(next); localStorage.setItem('sidebarCollapsed', String(next)); }}
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={isCollapsed ? 'Expand' : 'Collapse'}
+            >
+              {isCollapsed ? '»' : '«'}
+            </button>
         </div>
         
         <div className="reddit-sidebar-section">
           <div className="reddit-sidebar-title">Navigation</div>
-          <Link to="/" className="reddit-sidebar-link">
+          <Link to="/" className="reddit-sidebar-link" aria-label="Home">
             <FaHome className="me-2" />
-            Home
+            <span className="label">Home</span>
           </Link>
-          <Link to="/standards" className="reddit-sidebar-link">
+          <Link to="/standards" className="reddit-sidebar-link" aria-label="Standards">
             <FaBook className="me-2" />
-            Standards
+            <span className="label">Standards</span>
           </Link>
-          <Link to="/insights" className="reddit-sidebar-link">
+          <Link to="/insights" className="reddit-sidebar-link" aria-label="Analytics">
             <FaChartBar className="me-2" />
-            Analytics
+            <span className="label">Analytics</span>
           </Link>
         </div>
 
-        <div className="reddit-sidebar-section">
-          <div className="reddit-sidebar-title">Tutorial Steps</div>
-          {tutorialSteps.map((_, index) => (
-            <button
-              key={index}
-              className={`reddit-sidebar-link ${index === currentStep ? 'active' : ''}`}
-              onClick={() => goToStep(index)}
-            >
-              <FaCheckCircle className="me-2" />
-              Step {index + 1}
-            </button>
-          ))}
-        </div>
+        {/* Removed sidebar step buttons for cleaner layout */}
 
         <div className="reddit-sidebar-section">
           <div className="reddit-sidebar-title">Tools</div>
-          <div className="reddit-sidebar-link">
+          <div className="reddit-sidebar-link" aria-label="Settings">
             <FaCog className="me-2" />
-            Settings
+            <span className="label">Settings</span>
           </div>
-          <div className="reddit-sidebar-link">
+          <div className="reddit-sidebar-link" aria-label="Community">
             <FaUsers className="me-2" />
-            Community
+            <span className="label">Community</span>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="reddit-main">
+      <div className={`reddit-main${isCollapsed ? ' collapsed' : ''}`}>
         <div className="reddit-nav">
           <div className="container d-flex justify-content-between align-items-center">
-            <Link to="/" className="reddit-nav-brand">
-              <FaRocket />
-              PMInsight
-            </Link>
             <div className="reddit-nav-links">
               <Link to="/standards" className="reddit-nav-link">
                 <FaBook className="me-1" />
@@ -360,8 +352,17 @@ const TutorialPage = () => {
                   Previous
                 </button>
 
-                <div className="reddit-text-secondary fw-bold">
-                  Step {currentStep + 1} of {tutorialSteps.length}
+                <div className="d-flex align-items-center gap-2">
+                  {tutorialSteps.map((_, i) => (
+                    <button
+                      key={`dot-${i}`}
+                      className={`tutorial-step-btn ${i === currentStep ? 'active' : ''}`}
+                      onClick={() => goToStep(i)}
+                      aria-label={`Go to step ${i + 1}`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
                 </div>
 
                 {currentStep < tutorialSteps.length - 1 ? (

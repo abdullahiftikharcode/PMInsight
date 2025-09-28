@@ -6,10 +6,12 @@ import StandardReaderView from './components/StandardReaderView';
 import SectionDetail from './components/SectionDetail';
 import InsightsDashboard from './components/InsightsDashboard';
 import SearchResults from './components/SearchResults';
+
 import './App.css';
 
 function App() {
   return (
+    
     <Router>
       <div className="min-h-screen">
         <Routes>

@@ -17,7 +17,9 @@ import {
   FaUsers,
   FaRocket,
   FaChartBar,
-  FaTimes
+  FaTimes,
+  FaAngleDoubleLeft,
+  FaAngleDoubleRight
 } from 'react-icons/fa';
 
 const StandardReaderView = () => {
@@ -28,6 +30,7 @@ const StandardReaderView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
+  const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [paginationLoading, setPaginationLoading] = useState(false);
@@ -143,15 +146,23 @@ const StandardReaderView = () => {
   if (loading) {
     return (
       <div className="reddit-layout">
-        <div className="reddit-sidebar">
+        <div className={`reddit-sidebar${isCollapsed ? ' collapsed' : ''}`}>
           <div className="reddit-sidebar-section">
-            <div className="reddit-nav-brand">
+            <Link to="/" className="reddit-nav-brand">
               <FaRocket />
-              PMInsight
-            </div>
+              <span className="label">PMInsight</span>
+            </Link>
+            <button
+              className="sidebar-toggle"
+              onClick={() => { const next = !isCollapsed; setIsCollapsed(next); localStorage.setItem('sidebarCollapsed', String(next)); }}
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={isCollapsed ? 'Expand' : 'Collapse'}
+            >
+              {isCollapsed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
+            </button>
           </div>
         </div>
-        <div className="reddit-main">
+        <div className={`reddit-main${isCollapsed ? ' collapsed' : ''}`}>
           <div className="reddit-content">
             <div className="reddit-loading">
               <div className="reddit-spinner"></div>
@@ -166,15 +177,23 @@ const StandardReaderView = () => {
   if (error || !standard) {
     return (
       <div className="reddit-layout">
-        <div className="reddit-sidebar">
+        <div className={`reddit-sidebar${isCollapsed ? ' collapsed' : ''}`}>
           <div className="reddit-sidebar-section">
-            <div className="reddit-nav-brand">
+            <Link to="/" className="reddit-nav-brand">
               <FaRocket />
-              PMInsight
-            </div>
+              <span className="label">PMInsight</span>
+            </Link>
+            <button
+              className="sidebar-toggle"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={isCollapsed ? 'Expand' : 'Collapse'}
+            >
+              {isCollapsed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
+            </button>
           </div>
         </div>
-        <div className="reddit-main">
+        <div className={`reddit-main${isCollapsed ? ' collapsed' : ''}`}>
           <div className="reddit-content">
             <div className="reddit-error">
               <FaExclamationTriangle className="reddit-error-icon" />
@@ -194,27 +213,35 @@ const StandardReaderView = () => {
   return (
     <div className="reddit-layout">
       {/* Reddit-Style Sidebar */}
-      <div className="reddit-sidebar" style={{overflowY: 'auto', height: '100vh'}}>
+      <div className={`reddit-sidebar${isCollapsed ? ' collapsed' : ''}`} style={{overflowY: 'auto', height: '100vh'}}>
         <div className="reddit-sidebar-section">
-          <div className="reddit-nav-brand">
+          <Link to="/" className="reddit-nav-brand">
             <FaRocket />
-            PMInsight
-          </div>
+            <span className="label">PMInsight</span>
+          </Link>
+          <button
+            className="sidebar-toggle"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={isCollapsed ? 'Expand' : 'Collapse'}
+          >
+            {isCollapsed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
+          </button>
         </div>
         
         <div className="reddit-sidebar-section">
           <div className="reddit-sidebar-title">Navigation</div>
-          <Link to="/" className="reddit-sidebar-link">
+          <Link to="/" className="reddit-sidebar-link" aria-label="Home">
             <FaHome className="me-2" />
-            Home
+            <span className="label">Home</span>
           </Link>
-          <Link to="/standards" className="reddit-sidebar-link">
+          <Link to="/standards" className="reddit-sidebar-link" aria-label="Standards">
             <FaBook className="me-2" />
-            Standards
+            <span className="label">Standards</span>
           </Link>
-          <Link to="/insights" className="reddit-sidebar-link">
+          <Link to="/insights" className="reddit-sidebar-link" aria-label="Analytics">
             <FaChartBar className="me-2" />
-            Analytics
+            <span className="label">Analytics</span>
           </Link>
         </div>
 
@@ -265,9 +292,9 @@ const StandardReaderView = () => {
 
         <div className="reddit-sidebar-section">
           <div className="reddit-sidebar-title">Table of Contents</div>
-          <div className="reddit-sidebar-link">
+          <div className="reddit-sidebar-link" aria-label="Sections count">
             <FaList className="me-2" />
-            {standard.pagination?.totalSections || standard.sections.length} sections
+            <span className="label">{standard.pagination?.totalSections || standard.sections.length} sections</span>
           </div>
           
           {/* TOC Page Info */}
@@ -343,9 +370,10 @@ const StandardReaderView = () => {
             className="reddit-sidebar-link btn btn-link text-start p-0 w-100"
             style={{fontSize: '0.9rem', textDecoration: 'none'}}
             disabled={bookmarks.size === 0}
+            aria-label="Bookmarked sections"
           >
             <FaBookmark className="me-2 text-warning" />
-            {bookmarks.size} bookmarked sections
+            <span className="label">{bookmarks.size} bookmarked sections</span>
           </button>
         </div>
                           
@@ -363,7 +391,7 @@ const StandardReaderView = () => {
       </div>
 
       {/* Main Content */}
-      <div className="reddit-main">
+      <div className={`reddit-main${isCollapsed ? ' collapsed' : ''}`}>
         <div className="reddit-nav">
           <div className="container d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-center">
@@ -466,7 +494,7 @@ const StandardReaderView = () => {
                                   overflow: 'hidden',
                                   margin: 0
                                 }}
-                                dangerouslySetInnerHTML={{ __html: result.snippet || result.content || 'No content available' }}
+                                dangerouslySetInnerHTML={{ __html: (result as any).snippet || (result as any).content || 'No content available' }}
                                 />
                               </div>
                               
@@ -642,14 +670,15 @@ const StandardReaderView = () => {
 
       {/* Bookmarks Modal */}
       {showBookmarks && (
-        <div className="reddit-overlay">
-          <div className="reddit-modal">
+        <div className="reddit-overlay" onClick={() => setShowBookmarks(false)}>
+          <div className="reddit-modal" onClick={(e) => e.stopPropagation()}>
             <div className="reddit-modal-header">
               <h3 className="h5 fw-bold reddit-text-primary mb-0">
                 <FaBookmark className="me-2 text-warning" />
                 All Bookmarked Sections
               </h3>
               <button
+                type="button"
                 onClick={() => setShowBookmarks(false)}
                 className="btn btn-outline-secondary btn-sm"
                 style={{fontSize: '0.75rem', padding: '4px 8px'}}
@@ -762,3 +791,4 @@ const StandardReaderView = () => {
 };
 
 export default StandardReaderView;
+

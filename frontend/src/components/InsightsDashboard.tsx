@@ -11,12 +11,15 @@ import {
   FaCog,
   FaUsers,
   FaSearch,
+  FaAngleDoubleLeft,
+  FaAngleDoubleRight
 } from 'react-icons/fa';
 
 const InsightsDashboard = () => {
   const [insights, setInsights] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -46,8 +49,8 @@ const InsightsDashboard = () => {
   if (loading) {
     return (
       <div className="reddit-layout">
-        <Sidebar />
-        <div className="reddit-main">
+        <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+        <div className={`reddit-main${isCollapsed ? ' collapsed' : ''}`}>
           <div className="reddit-content d-flex flex-column align-items-center justify-content-center py-5">
             <div className="reddit-spinner mb-3"></div>
             <p className="reddit-text-secondary fs-5">Loading insights...</p>
@@ -63,8 +66,8 @@ const InsightsDashboard = () => {
   if (error) {
     return (
       <div className="reddit-layout">
-        <Sidebar />
-        <div className="reddit-main">
+        <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+        <div className={`reddit-main${isCollapsed ? ' collapsed' : ''}`}>
           <div className="reddit-content text-center py-5">
             <FaExclamationTriangle className="reddit-error-icon mb-3" />
             <h2 className="h3 fw-bold reddit-text-primary mb-2">Error</h2>
@@ -84,8 +87,8 @@ const InsightsDashboard = () => {
   // ------------------------
   return (
     <div className="reddit-layout">
-      <Sidebar />
-      <div className="reddit-main">
+      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+      <div className={`reddit-main${isCollapsed ? ' collapsed' : ''}`}>
         <TopNav />
 
         <div className="reddit-content">
@@ -217,45 +220,53 @@ const InsightsDashboard = () => {
 };
 
 
-const Sidebar = () => (
-  <div className="reddit-sidebar">
+const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean; setIsCollapsed: (v: boolean) => void; }) => (
+  <div className={`reddit-sidebar${isCollapsed ? ' collapsed' : ''}`}>
     <div className="reddit-sidebar-section">
-      <div className="reddit-nav-brand">
+      <Link to="/" className="reddit-nav-brand">
         <FaRocket />
-        PMInsight
-      </div>
+        <span className="label">PMInsight</span>
+      </Link>
+      <button
+        className="sidebar-toggle"
+        onClick={() => { const next = !isCollapsed; setIsCollapsed(next); localStorage.setItem('sidebarCollapsed', String(next)); }}
+        aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        title={isCollapsed ? 'Expand' : 'Collapse'}
+      >
+        {isCollapsed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
+      </button>
     </div>
 
     <div className="reddit-sidebar-section">
       <div className="reddit-sidebar-title">Navigation</div>
-      <Link to="/" className="reddit-sidebar-link">
-        <FaHome className="me-2" /> Home
+      <Link to="/" className="reddit-sidebar-link" aria-label="Home">
+        <FaHome className="me-2" /> <span className="label">Home</span>
       </Link>
-      <Link to="/standards" className="reddit-sidebar-link">
-        <FaBook className="me-2" /> Standards
+      <Link to="/standards" className="reddit-sidebar-link" aria-label="Standards">
+        <FaBook className="me-2" /> <span className="label">Standards</span>
       </Link>
-      <Link to="/insights" className="reddit-sidebar-link active">
-        <FaChartBar className="me-2" /> Analytics
+      <Link to="/insights" className="reddit-sidebar-link active" aria-label="Analytics">
+        <FaChartBar className="me-2" /> <span className="label">Analytics</span>
       </Link>
     </div>
 
     <div className="reddit-sidebar-section">
       <div className="reddit-sidebar-title">Quick Actions</div>
-      <Link to="/standards" className="reddit-sidebar-link">
-        <FaSearch className="me-2" /> Search Standards
+      <Link to="/standards" className="reddit-sidebar-link" aria-label="Search Standards">
+        <FaSearch className="me-2" /> <span className="label">Search Standards</span>
       </Link>
-      <Link to="/tutorial" className="reddit-sidebar-link">
-        <FaRocket className="me-2" /> Tutorial
+      <Link to="/tutorial" className="reddit-sidebar-link" aria-label="Tutorial">
+        <FaRocket className="me-2" /> <span className="label">Tutorial</span>
       </Link>
     </div>
 
     <div className="reddit-sidebar-section">
       <div className="reddit-sidebar-title">Tools</div>
-      <div className="reddit-sidebar-link">
-        <FaCog className="me-2" /> Settings
+      <div className="reddit-sidebar-link" aria-label="Settings">
+        <FaCog className="me-2" /> <span className="label">Settings</span>
       </div>
-      <div className="reddit-sidebar-link">
-        <FaUsers className="me-2" /> Community
+      <div className="reddit-sidebar-link" aria-label="Community">
+        <FaUsers className="me-2" /> <span className="label">Community</span>
       </div>
     </div>
   </div>

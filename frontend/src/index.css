@@ -113,6 +113,68 @@
   padding: var(--space-lg);
 }
 
+/* Collapsible sidebar */
+.reddit-sidebar.collapsed {
+  width: 84px;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+}
+
+.reddit-sidebar .label { display: inline; }
+.reddit-sidebar.collapsed .label { display: none; }
+
+.reddit-sidebar .sidebar-toggle {
+  margin-top: var(--space-sm);
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reddit-sidebar .sidebar-toggle:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+/* Collapsed desktop visual polish */
+.reddit-sidebar.collapsed .reddit-sidebar-link {
+  display: flex;
+  justify-content: center;
+  padding: 10px 8px;
+}
+.reddit-sidebar.collapsed .reddit-sidebar-link .me-2 { margin-right: 0 !important; }
+.reddit-sidebar.collapsed .reddit-sidebar-link .label { display: none; }
+.reddit-sidebar.collapsed .reddit-sidebar-title::after { display: none; }
+.reddit-sidebar.collapsed .reddit-sidebar-title { text-align: center; opacity: 0.6; }
+
+/* Icon-only tooltip-esque hint on hover (desktop) */
+.reddit-sidebar.collapsed .reddit-sidebar-link::after {
+  content: attr(aria-label);
+  position: absolute;
+  left: 100%;
+  margin-left: 8px;
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-50%);
+  top: 50%;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.reddit-sidebar.collapsed .reddit-sidebar-link:hover::after { opacity: 1; }
+
 .reddit-main {
   flex: 1;
   margin-left: 312px;
@@ -120,8 +182,18 @@
   background-color: var(--bg-primary);
 }
 
+.reddit-main.collapsed { margin-left: 84px; }
+
+/* Mobile drawer overlay */
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 900;
+}
+
 .reddit-content {
-  max-width: 640px;
+  max-width: 980px;
   margin: 0 auto;
   padding: var(--space-lg);
 }
@@ -257,6 +329,31 @@
   text-decoration: none;
   position: relative;
   overflow: hidden;
+}
+
+/* Tutorial step buttons (1,2,3,4) theme-matched */
+.tutorial-step-btn {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-full);
+  padding: 6px 12px;
+  font-weight: 700;
+  min-width: 36px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.tutorial-step-btn:hover { 
+  color: var(--text-primary); 
+  border-color: var(--reddit-orange); 
+  box-shadow: var(--shadow-sm); 
+}
+
+.tutorial-step-btn.active { 
+  background: linear-gradient(135deg, var(--reddit-orange) 0%, var(--reddit-orange-light) 100%); 
+  color: var(--text-inverse); 
+  border-color: var(--reddit-orange); 
 }
 
 .btn-reddit-outline::before {
@@ -418,6 +515,27 @@
   transition: all 0.3s ease;
   position: relative;
 }
+
+/* Ensure nav buttons never appear white; keep theme colors */
+.reddit-nav-link, .btn-reddit, .btn-reddit-outline, .btn-reddit-secondary {
+  filter: none !important;
+}
+
+/* Hamburger button */
+.hamburger-btn {
+  display: none;
+  width: 36px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.hamburger-btn span { display: block; width: 20px; height: 2px; background: var(--text-secondary); }
+.hamburger-btn:hover { border-color: var(--reddit-orange); }
 
 .reddit-nav-link:hover {
   color: var(--text-primary);
@@ -730,29 +848,85 @@
   .reddit-main {
     margin-left: 280px;
   }
+  .reddit-main.collapsed { margin-left: 84px; }
 }
 
 @media (max-width: 768px) {
+  /* Desktop-style sidebar on mobile */
   .reddit-sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
+    width: 260px;
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+    transition: width 0.3s ease, padding 0.3s ease;
   }
-  
-  .reddit-sidebar.open {
-    transform: translateX(0);
+  .reddit-sidebar.collapsed {
+    width: 72px;
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
   }
-  
-  .reddit-main {
-    margin-left: 0;
+  .reddit-sidebar .label { display: inline; }
+  .reddit-sidebar.collapsed .label { display: none; }
+  .reddit-main { margin-left: 260px; }
+  .reddit-main.collapsed { margin-left: 72px; }
+  .reddit-content { max-width: 100%; padding: var(--space-md); }
+  .reddit-nav {
+    padding: var(--space-sm) 0;
   }
-  
-  .reddit-content {
-    padding: var(--space-md);
-  }
-  
-  .reddit-nav-links {
+  .reddit-nav .container {
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-md);
+  }
+  .reddit-nav-links { 
+    gap: var(--space-sm); 
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+  .reddit-nav-link {
+    font-size: 0.9rem;
+    padding: var(--space-xs) var(--space-sm);
+    white-space: nowrap;
+  }
+  .reddit-card { margin-bottom: var(--space-md); }
+  /* Disable desktop hover tooltip on mobile */
+  .reddit-sidebar.collapsed .reddit-sidebar-link::after { display: none; }
+  
+  /* Landing page mobile fixes */
+  .hero-title {
+    font-size: var(--font-size-3xl);
+    margin-bottom: var(--space-md);
+  }
+  .hero-subtitle {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-xl);
+  }
+  /* Hero section button spacing */
+  .hero-section .d-flex {
+    margin-bottom: var(--space-2xl);
+  }
+  .feature-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+  }
+  .feature-card {
+    padding: var(--space-lg);
+    margin-bottom: var(--space-md);
+  }
+  .feature-card:last-child {
+    margin-bottom: 0;
+  }
+  .feature-icon {
+    font-size: var(--font-size-3xl);
+    margin-bottom: var(--space-md);
+  }
+  .feature-title {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-sm);
+  }
+  .feature-description {
+    margin-bottom: var(--space-md);
+    line-height: 1.5;
   }
 }
 
@@ -1346,6 +1520,15 @@
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
+}
+
+/* Make modal close icon bold/clear */
+.reddit-modal-header .btn.btn-outline-secondary.btn-sm {
+  border-width: 2px;
+  font-weight: 800;
+}
+.reddit-modal-header .btn.btn-outline-secondary.btn-sm:hover {
+  border-color: var(--reddit-orange);
 }
 
 .reddit-modal-body {
