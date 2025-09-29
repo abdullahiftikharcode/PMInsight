@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/src/index.js",
+    "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "node dist/prisma/seed.js",
+    "db:seed": "ts-node prisma/seed.ts",
     "db:reset": "prisma migrate reset",
     "upload:pmbok": "ts-node src/scripts/upload-pmbok.ts",
     "upload:iso21500": "ts-node src/scripts/upload-iso21500.ts",
