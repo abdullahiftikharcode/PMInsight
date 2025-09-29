@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { apiService, type StandardDetail, type SearchResult } from '../services/api';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { 
@@ -14,6 +14,7 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaCog,
+  FaCogs,
   FaUsers,
   FaRocket,
   FaChartBar,
@@ -23,6 +24,7 @@ import {
 } from 'react-icons/fa';
 
 const StandardReaderView = () => {
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const [standard, setStandard] = useState<StandardDetail | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -231,15 +233,23 @@ const StandardReaderView = () => {
         
         <div className="reddit-sidebar-section">
           <div className="reddit-sidebar-title">Navigation</div>
-          <Link to="/" className="reddit-sidebar-link" aria-label="Home">
+          <Link to="/" className={`reddit-sidebar-link${location.pathname === '/' ? ' active' : ''}`} aria-label="Home">
             <FaHome className="me-2" />
             <span className="label">Home</span>
           </Link>
-          <Link to="/standards" className="reddit-sidebar-link" aria-label="Standards">
+          <Link to="/standards" className={`reddit-sidebar-link${location.pathname.startsWith('/standard') || location.pathname.startsWith('/standards') ? ' active' : ''}`} aria-label="Standards">
             <FaBook className="me-2" />
             <span className="label">Standards</span>
           </Link>
-          <Link to="/insights" className="reddit-sidebar-link" aria-label="Analytics">
+          <Link to="/comparison" className={`reddit-sidebar-link${location.pathname.startsWith('/comparison') ? ' active' : ''}`} aria-label="Comparison">
+            <FaBook className="me-2" />
+            <span className="label">Comparison</span>
+          </Link>
+          <Link to="/process-generator" className={`reddit-sidebar-link${location.pathname.startsWith('/process-generator') ? ' active' : ''}`} aria-label="Process Generator">
+            <FaCogs className="me-2" />
+            <span className="label">Process Generator</span>
+          </Link>
+          <Link to="/insights" className={`reddit-sidebar-link${location.pathname.startsWith('/insights') ? ' active' : ''}`} aria-label="Analytics">
             <FaChartBar className="me-2" />
             <span className="label">Analytics</span>
           </Link>

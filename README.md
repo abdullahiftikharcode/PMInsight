@@ -57,6 +57,7 @@ PM/
 - **Deep Linking**: Direct links to specific sections within standards
 - **Statistics Dashboard**: Overview of standards coverage and content analysis
 - **Tutorial System**: Guided walkthrough for new users
+ - **Tailored Process Generator**: Generate scenario-specific project processes with evidence-based citations to standard sections
 
 ### User Experience
 - **Reddit-style Interface**: Familiar navigation and layout patterns
@@ -64,7 +65,7 @@ PM/
 - **Section Navigation**: Previous/Next navigation between sections
 - **Table of Contents**: Hierarchical navigation within standards
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
-- **Loading States**: Smooth user experience with proper loading indicators
+- **Loading States**: Smooth user experience with loading indicators, including an overlay spinner during tailored process generation
 
 ## 🏗️ Architecture
 
@@ -73,7 +74,7 @@ PM/
 - **API**: Comprehensive RESTful endpoints for standards, search, insights, and navigation
 - **Performance**: Efficient pagination, search algorithms, and similarity scoring
 - **Data Processing**: Automated upload scripts for all project management standards
-- **Schema Management**: Dual schema support (with/without AI features)
+- **AI Optionality**: Optional AI summarization via Gemini for insights and standard summaries (falls back to heuristic logic)
 
 ### Frontend (React + TypeScript + Vite)
 - **Framework**: React 19 with TypeScript and modern hooks
@@ -112,6 +113,8 @@ npm install
 
 ```env
 DATABASE_URL="postgresql://username:password@localhost:5432/pm_standards_db?schema=public"
+# Optional: enable AI features for insights and summaries
+GEMINI_API_KEY="your_google_generative_ai_key"
 ```
 
 ### 3. Database Setup
@@ -184,6 +187,20 @@ The application will be available at:
 - `GET /api/compare` - Compare sections across standards by topic
 - `GET /api/insights` - Get comprehensive statistics about standards coverage
 
+### Tailored Process Generator
+- `POST /api/process/generate` - Generate a tailored project process for a given scenario
+  - Request body:
+    ```json
+    {
+      "projectName": "ERP rollout",
+      "scenarioId": "it" | "construction" | "research",
+      "lifecycle": "predictive" | "agile" | "hybrid",
+      "constraints": ["fixed scope", "regulatory approvals"],
+      "drivers": ["Compliance", "Time-to-market"]
+    }
+    ```
+  - Response: summary plus phases -> activities with evidence citations to standards sections
+
 ### System
 - `GET /api/health` - Health check endpoint
 
@@ -203,6 +220,7 @@ The application will be available at:
 - **InsightsDashboard**: Comprehensive statistics and topic analysis
 - **ComparisonView**: Side-by-side comparison of standards sections
 - **BookmarksPage**: Manage saved sections and favorites
+ - **ProcessGenerator**: Form-driven generator producing a tailored process with deep links; includes a visible loading overlay while generating
 
 ### Navigation Features
 - **Reddit-style Sidebar**: Consistent navigation across all pages
@@ -254,15 +272,11 @@ These files are processed by dedicated upload scripts to populate the database w
 - `Standard`: Project management standards with metadata (PMBOK 7, PRINCE2, ISO 21500, ISO 21502, Standard for Project Management)
 - `Chapter`: Organizational chapters within standards
 - `Section`: Individual sections with content, word counts, sentence counts, and metadata
-- `Topic`: Topic definitions for comparison analysis
-- `GeneratedInsight`: AI-generated insights and comparisons
 
 ### Key Features
-- **Dual Schema Support**: Main schema with vector embeddings and simplified schema without AI features
 - **Optimized Queries**: Fast search, pagination, and similarity scoring
 - **Content Analysis**: Word counts, sentence counts, and section statistics
 - **Hierarchical Structure**: Standards → Chapters → Sections
-- **Vector Support**: Optional vector embeddings for advanced search capabilities
 - **Unique Constraints**: Ensures data integrity with proper indexing
 
 ## 🔍 Search Features
@@ -309,7 +323,6 @@ These files are processed by dedicated upload scripts to populate the database w
 - **Optimized Queries**: Fast search across large datasets with proper indexing
 - **Smart Caching**: Reduced database load with intelligent result caching
 - **Responsive Design**: Works seamlessly on all device sizes and screen resolutions
-- **Vector Search**: Optional vector embeddings for advanced semantic search
 - **Similarity Scoring**: Intelligent relevance ranking for search results
 - **Lazy Loading**: Components and data loaded on demand for better performance
 
@@ -320,7 +333,7 @@ These files are processed by dedicated upload scripts to populate the database w
 - **Express.js**: Web framework
 - **TypeScript**: Type-safe development
 - **Prisma**: Database ORM with PostgreSQL
-- **PostgreSQL**: Primary database with vector extensions
+- **PostgreSQL**: Primary database
 - **CORS**: Cross-origin resource sharing
 
 ### Frontend Technologies
@@ -332,6 +345,7 @@ These files are processed by dedicated upload scripts to populate the database w
 - **React Icons**: Comprehensive icon library
 - **Radix UI**: Accessible component primitives
 - **Bootstrap 5**: CSS framework for responsive design
+ - **Loading Overlay**: Custom SVG spinner overlay for long-running operations
 
 ### Development Tools
 - **ESLint**: Code linting and formatting
