@@ -215,6 +215,78 @@ const TutorialPage = () => {
           </div>
         </div>
       )
+    },
+    {
+      title: "Comparison Engine",
+      description: "Analyze topics across standards with side-by-side insights and deep links.",
+      icon: <FaBalanceScale />,
+      content: (
+        <div className="tutorial-content">
+          <h3 className="h4 fw-bold reddit-text-primary mb-4">Compare Standards by Topic</h3>
+          <p className="reddit-text-secondary mb-3">Pick a topic like Risk Management or Stakeholder Management and see how each standard addresses it. Each point links directly to the exact sections for evidence.</p>
+          <div className="reddit-card mb-3">
+            <div className="reddit-card-body d-flex flex-column flex-sm-row gap-2">
+              <Link to="/comparison" className="btn-reddit">
+                Open Comparison
+              </Link>
+              <Link to="/section/1" className="btn btn-outline-primary">Sample Section</Link>
+            </div>
+          </div>
+          <ul className="reddit-text-secondary mb-0">
+            <li>AI-backed summaries with similarities and differences (fallback available)</li>
+            <li>Relevant sections list with deep links</li>
+            <li>Consistent terminology and topic grouping</li>
+          </ul>
+        </div>
+      )
+    },
+    {
+      title: "Process Generator",
+      description: "Create a tailored process with phases, activities, and citations from standards.",
+      icon: <FaCogs />,
+      content: (
+        <div className="tutorial-content">
+          <h3 className="h4 fw-bold reddit-text-primary mb-4">Generate a Tailored Process</h3>
+          <p className="reddit-text-secondary mb-3">Choose a scenario, lifecycle, and constraints. The generator produces phases and activities with evidence-based citations to standards.</p>
+          <div className="reddit-card mb-3">
+            <div className="reddit-card-body d-flex flex-column flex-sm-row gap-2">
+              <Link to="/process-generator" className="btn-reddit">
+                Open Process Generator
+              </Link>
+              <button type="button" className="btn btn-outline-primary" disabled>Export Examples</button>
+            </div>
+          </div>
+          <ul className="reddit-text-secondary mb-0">
+            <li>Scenario templates (IT, Construction, Research)</li>
+            <li>Lifecycle options (Predictive, Agile, Hybrid)</li>
+            <li>Exports (JSON/CSV) and print</li>
+          </ul>
+        </div>
+      )
+    },
+    {
+      title: "Topic Map",
+      description: "Explore an interactive network of topics, sections, and standards.",
+      icon: <FaProjectDiagram />,
+      content: (
+        <div className="tutorial-content">
+          <h3 className="h4 fw-bold reddit-text-primary mb-4">Visual Topic Map</h3>
+          <p className="reddit-text-secondary mb-3">Hover to highlight relationships, drag to pan, scroll to zoom. Click a node to open section or standard details. Filter by standard and control graph density.</p>
+          <div className="reddit-card mb-3">
+            <div className="reddit-card-body d-flex flex-column flex-sm-row gap-2">
+              <Link to="/map" className="btn-reddit">
+                Open Topic Map
+              </Link>
+              <button type="button" className="btn btn-outline-primary" disabled>Try Filters</button>
+            </div>
+          </div>
+          <ul className="reddit-text-secondary mb-0">
+            <li>Deep links from nodes to sections/standards</li>
+            <li>Adjust topics and sections per topic</li>
+            <li>Copy sharable link with current view parameters</li>
+          </ul>
+        </div>
+      )
     }
   ];
 
