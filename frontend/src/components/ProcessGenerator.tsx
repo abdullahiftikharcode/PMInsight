@@ -126,7 +126,7 @@ const ProcessGenerator = () => {
         <div className="reddit-sidebar-section">
           <div className="reddit-nav-brand">
             <FaRocket className="me-2" />
-            PM Standards
+            <span className="label">PM Standards</span>
           </div>
           <button className="sidebar-toggle" onClick={toggleSidebar} title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
             {isCollapsed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
@@ -136,6 +136,8 @@ const ProcessGenerator = () => {
         <div className="reddit-sidebar-section">
           <div className="reddit-sidebar-title">Navigation</div>
           <Link to="/" className="reddit-sidebar-link"><FaHome className="me-2" /><span className="label">Dashboard</span></Link>
+          <Link to="/standards" className="reddit-sidebar-link"><FaBook className="me-2" /><span className="label">Standards</span></Link>
+          <Link to="/comparison" className="reddit-sidebar-link"><FaBook className="me-2" /><span className="label">Comparison</span></Link>
           <Link to="/insights" className="reddit-sidebar-link"><FaChartBar className="me-2" /><span className="label">Insights</span></Link>
           <Link to="/process-generator" className="reddit-sidebar-link active"><FaCogs className="me-2" /><span className="label">Process Generator</span></Link>
         </div>

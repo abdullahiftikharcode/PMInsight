@@ -245,8 +245,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean; setIsC
       <Link to="/standards" className="reddit-sidebar-link" aria-label="Standards">
         <FaBook className="me-2" /> <span className="label">Standards</span>
       </Link>
+      <Link to="/comparison" className="reddit-sidebar-link" aria-label="Comparison">
+        <FaBook className="me-2" /> <span className="label">Comparison</span>
+      </Link>
       <Link to="/insights" className="reddit-sidebar-link active" aria-label="Analytics">
         <FaChartBar className="me-2" /> <span className="label">Analytics</span>
+      </Link>
+      <Link to="/process-generator" className="reddit-sidebar-link" aria-label="Process Generator">
+        <FaCogs className="me-2" /> <span className="label">Process Generator</span>
       </Link>
     </div>
 

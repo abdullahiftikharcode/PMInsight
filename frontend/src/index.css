@@ -1035,6 +1035,29 @@
   color: var(--text-primary);
 }
 
+/* Ensure all editable fields show light text in dark theme */
+.form-control, .form-select, input[type="text"], input[type="search"], input[type="email"], input[type="number"], textarea, select {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-medium) !important;
+}
+
+.form-control:focus, .form-select:focus, input:focus, textarea:focus, select:focus {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-quaternary) !important;
+  border-color: var(--reddit-orange) !important;
+}
+
+/* Improve readability on autofill in Chromium */
+input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill {
+  -webkit-text-fill-color: var(--text-primary) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--bg-tertiary) inset !important;
+  box-shadow: 0 0 0px 1000px var(--bg-tertiary) inset !important;
+}
+
+/* Hint browsers that controls use dark color scheme */
+input, textarea, select { color-scheme: dark; }
+
 .form-control:focus {
   border-color: var(--reddit-orange);
   box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);

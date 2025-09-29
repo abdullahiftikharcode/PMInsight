@@ -21,6 +21,7 @@ const TopicSelector = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
 
   useEffect(() => {
@@ -103,7 +104,7 @@ const TopicSelector = () => {
         <div className="reddit-sidebar-section">
           <div className="reddit-nav-brand">
             <FaRocket className="me-2" />
-            PM Standards
+            <span className="label">PM Standards</span>
           </div>
           <button 
             className="sidebar-toggle"
@@ -120,6 +121,10 @@ const TopicSelector = () => {
             <FaHome className="me-2" />
             <span className="label">Dashboard</span>
           </Link>
+          <Link to="/standards" className="reddit-sidebar-link">
+            <FaBook className="me-2" />
+            <span className="label">Standards</span>
+          </Link>
           <Link to="/insights" className="reddit-sidebar-link">
             <FaChartBar className="me-2" />
             <span className="label">Insights</span>
@@ -127,6 +132,10 @@ const TopicSelector = () => {
           <Link to="/comparison" className="reddit-sidebar-link active">
             <FaBook className="me-2" />
             <span className="label">Comparison</span>
+          </Link>
+          <Link to="/process-generator" className="reddit-sidebar-link">
+            <FaCog className="me-2" />
+            <span className="label">Process Generator</span>
           </Link>
         </div>
       </div>
@@ -167,18 +176,18 @@ const TopicSelector = () => {
                 className="reddit-card" 
                 style={{
                   borderRadius: '15px', 
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  boxShadow: searchFocused ? '0 10px 30px rgba(255, 107, 53, 0.25)' : '0 4px 20px rgba(0,0,0,0.08)',
                   background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255, 107, 53, 0.15)',
+                  border: searchFocused ? '1px solid rgba(255, 107, 53, 0.4)' : '1px solid rgba(255, 107, 53, 0.15)',
                   padding: '1.5rem'
                 }}
               >
-                <div className="input-group" style={{height: '60px'}}>
+                <div className="input-group" style={{height: '56px'}}>
                   <span 
                     className="input-group-text bg-transparent border-0" 
                     style={{
                       color: 'var(--reddit-orange)',
-                      fontSize: '1.3rem',
+                      fontSize: '1.2rem',
                       paddingLeft: '1.25rem',
                       paddingRight: '1rem',
                       borderRight: 'none'
@@ -192,12 +201,14 @@ const TopicSelector = () => {
                     placeholder="Search comparison topics..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setSearchFocused(false)}
                     style={{
-                      fontSize: '1.1rem',
-                      color: 'var(--reddit-text-primary)',
+                      fontSize: '1rem',
+                      color: 'var(--text-primary)',
                       paddingLeft: '0.75rem',
                       paddingRight: '1rem',
-                      height: '60px',
+                      height: '56px',
                       borderLeft: 'none',
                       borderRight: 'none'
                     }}
@@ -207,15 +218,15 @@ const TopicSelector = () => {
                       className="btn btn-outline-secondary border-0 rounded-circle"
                       onClick={() => setSearchQuery('')}
                       style={{
-                        color: 'var(--reddit-text-muted)',
+                        color: 'var(--text-secondary)',
                         width: '40px',
                         height: '40px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginRight: '1rem',
-                        background: 'rgba(255, 107, 53, 0.1)',
-                        border: '1px solid rgba(255, 107, 53, 0.2)'
+                        background: searchFocused ? 'rgba(255, 107, 53, 0.15)' : 'rgba(255, 107, 53, 0.1)',
+                        border: searchFocused ? '1px solid rgba(255, 107, 53, 0.35)' : '1px solid rgba(255, 107, 53, 0.2)'
                       }}
                       title="Clear search"
                     >

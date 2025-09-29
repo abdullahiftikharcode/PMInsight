@@ -101,7 +101,7 @@ const ComparisonView = () => {
         <div className="reddit-sidebar-section">
           <div className="reddit-nav-brand">
             <FaRocket className="me-2" />
-            PM Standards
+            <span className="label">PM Standards</span>
           </div>
           <button 
             className="sidebar-toggle"
