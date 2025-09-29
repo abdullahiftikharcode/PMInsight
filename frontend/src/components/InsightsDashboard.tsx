@@ -9,6 +9,7 @@ import {
   FaExclamationTriangle,
   FaRocket,
   FaCog,
+  FaCogs,
   FaUsers,
   FaSearch,
   FaAngleDoubleLeft,
@@ -247,6 +248,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean; setIsC
       </Link>
       <Link to="/comparison" className="reddit-sidebar-link" aria-label="Comparison">
         <FaBook className="me-2" /> <span className="label">Comparison</span>
+      </Link>
+      <Link to="/map" className="reddit-sidebar-link" aria-label="Topic Map">
+        <FaChartBar className="me-2" /> <span className="label">Topic Map</span>
       </Link>
       <Link to="/insights" className="reddit-sidebar-link active" aria-label="Analytics">
         <FaChartBar className="me-2" /> <span className="label">Analytics</span>

@@ -9,6 +9,7 @@ import InsightsDashboard from './components/InsightsDashboard';
 import SearchResults from './components/SearchResults';
 import TopicSelector from './components/TopicSelector';
 import ComparisonView from './components/ComparisonView';
+import TopicMap from './components/TopicMap';
 
 import './App.css';
 
@@ -25,6 +26,7 @@ function App() {
           <Route path="/section/:id" element={<SectionDetail />} />
           <Route path="/insights" element={<InsightsDashboard />} />
           <Route path="/comparison" element={<TopicSelector />} />
+          <Route path="/map" element={<TopicMap />} />
           <Route path="/process-generator" element={<ProcessGenerator />} />
           <Route path="/comparison/:topicId" element={<ComparisonView />} />
           <Route path="/search" element={<SearchResults query="" onBack={() => window.history.back()} />} />

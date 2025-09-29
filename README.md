@@ -58,6 +58,7 @@ PM/
 - **Statistics Dashboard**: Overview of standards coverage and content analysis
 - **Tutorial System**: Guided walkthrough for new users
  - **Tailored Process Generator**: Generate scenario-specific project processes with evidence-based citations to standard sections
+ - **Visual Topic Map (New)**: Interactive graph linking topics → sections → standards with deep links
 
 ### User Experience
 - **Reddit-style Interface**: Familiar navigation and layout patterns
@@ -186,6 +187,7 @@ The application will be available at:
 - `GET /api/search` - Global search across all standards with filtering
 - `GET /api/compare` - Compare sections across standards by topic
 - `GET /api/insights` - Get comprehensive statistics about standards coverage
+ - `GET /api/graph` - Topic → Section → Standard graph data for visualization
 
 ### Tailored Process Generator
 - `POST /api/process/generate` - Generate a tailored project process for a given scenario
@@ -221,6 +223,21 @@ The application will be available at:
 - **ComparisonView**: Side-by-side comparison of standards sections
 - **BookmarksPage**: Manage saved sections and favorites
  - **ProcessGenerator**: Form-driven generator producing a tailored process with deep links; includes a visible loading overlay while generating
+ - **TopicMap**: SVG-based interactive network of topics, sections, and standards
+
+## 🗺️ Visual Topic Map
+
+Explore how common topics connect to specific sections across all standards.
+
+### How to use
+1. Start both backend and frontend (see Setup Instructions).
+2. Open the frontend and navigate to `Topic Map` from the sidebar or go to `/map`.
+3. Hover nodes to highlight related items. Click a section node to open the section, or a standard node to open its library view.
+
+### API
+- `GET /api/graph?topicLimit=8&sectionsPerTopic=12`
+  - Returns nodes and edges for topics, sections and standards. Use parameters to control density.
+
 
 ### Navigation Features
 - **Reddit-style Sidebar**: Consistent navigation across all pages

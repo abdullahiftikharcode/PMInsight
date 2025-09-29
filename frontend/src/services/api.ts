@@ -95,6 +95,30 @@ export interface GeneratedProcessResponse {
   generatedAt: string;
 }
 
+export interface TopicGraphNode {
+  id: string;
+  type: 'topic' | 'section' | 'standard';
+  label: string;
+  size?: number;
+  meta?: any;
+}
+
+export interface TopicGraphEdge {
+  source: string;
+  target: string;
+  weight?: number;
+  kind: 'topic-section' | 'section-standard';
+}
+
+export interface TopicGraphResponse {
+  nodes: TopicGraphNode[];
+  edges: TopicGraphEdge[];
+  metadata: {
+    topics: { topic: string; coverage: number }[];
+    counts: { nodes: number; edges: number };
+  };
+}
+
 // API functions
 export const apiService = {
   // Get all standards
@@ -172,6 +196,16 @@ export const apiService = {
     drivers: string[];
   }): Promise<GeneratedProcessResponse> => {
     const response = await api.post('/process/generate', payload);
+    return response.data;
+  },
+
+  // Topic graph for visualization
+  getGraph: async (params?: { topicLimit?: number; sectionsPerTopic?: number }): Promise<TopicGraphResponse> => {
+    const sp = new URLSearchParams();
+    if (params?.topicLimit) sp.set('topicLimit', String(params.topicLimit));
+    if (params?.sectionsPerTopic) sp.set('sectionsPerTopic', String(params.sectionsPerTopic));
+    const qs = sp.toString();
+    const response = await api.get(`/graph${qs ? `?${qs}` : ''}`);
     return response.data;
   },
 };

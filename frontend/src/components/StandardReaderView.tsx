@@ -245,6 +245,10 @@ const StandardReaderView = () => {
             <FaBook className="me-2" />
             <span className="label">Comparison</span>
           </Link>
+          <Link to="/map" className={`reddit-sidebar-link${location.pathname.startsWith('/map') ? ' active' : ''}`} aria-label="Topic Map">
+            <FaChartBar className="me-2" />
+            <span className="label">Topic Map</span>
+          </Link>
           <Link to="/process-generator" className={`reddit-sidebar-link${location.pathname.startsWith('/process-generator') ? ' active' : ''}`} aria-label="Process Generator">
             <FaCogs className="me-2" />
             <span className="label">Process Generator</span>

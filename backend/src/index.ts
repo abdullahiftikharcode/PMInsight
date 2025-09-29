@@ -574,6 +574,113 @@ app.get('/api/insights', async (req, res) => {
   }
 });
 
+// 6.a GET /api/graph - Topic → Section → Standard graph for visualization
+app.get('/api/graph', async (req, res) => {
+  try {
+    const { topicLimit = '10', sectionsPerTopic = '20' } = req.query as any;
+    const maxTopics = Math.max(1, parseInt(String(topicLimit)) || 10);
+    const maxSections = Math.max(1, parseInt(String(sectionsPerTopic)) || 20);
+
+    // Reuse the simple topics set from insights
+    const commonTopics = [
+      'Risk Management', 'Stakeholder Engagement', 'Quality Management',
+      'Project Planning', 'Team Management', 'Communication',
+      'Change Management', 'Resource Management', 'Time Management',
+      'Cost Management', 'Scope Management', 'Integration Management'
+    ];
+
+    // Compute coverage cheaply by counting per topic without loading all sections
+    // Then fetch limited sections per selected topic
+    const coverageByTopic: { topic: string; coverage: number }[] = [];
+    for (const topic of commonTopics) {
+      const lc = topic.toLowerCase();
+      const count = await prisma.section.count({
+        where: {
+          OR: [
+            { title: { contains: lc, mode: 'insensitive' } },
+            { content: { contains: lc, mode: 'insensitive' } },
+            { fullTitle: { contains: lc, mode: 'insensitive' } }
+          ]
+        }
+      });
+      if (count > 0) coverageByTopic.push({ topic, coverage: count });
+    }
+
+    const topicStats = coverageByTopic
+      .sort((a, b) => b.coverage - a.coverage)
+      .slice(0, maxTopics);
+
+    // Build nodes and edges
+    type Node = { id: string; type: 'topic' | 'section' | 'standard'; label: string; size?: number; meta?: any };
+    type Edge = { source: string; target: string; weight?: number; kind: 'topic-section' | 'section-standard' };
+    const nodes: Record<string, Node> = {};
+    const edges: Edge[] = [];
+
+    // Add standard nodes once
+    const ensureStandard = (std: { id: number; title: string }) => {
+      const nodeId = `std:${std.id}`;
+      if (!nodes[nodeId]) {
+        nodes[nodeId] = { id: nodeId, type: 'standard', label: std.title, size: 16, meta: { id: std.id } };
+      }
+      return nodeId;
+    };
+
+    for (const { topic } of topicStats) {
+      const topicId = `topic:${topic}`;
+      nodes[topicId] = { id: topicId, type: 'topic', label: topic, size: 18 };
+
+      const lc = topic.toLowerCase();
+      const matched = await prisma.section.findMany({
+        where: {
+          OR: [
+            { title: { contains: lc, mode: 'insensitive' } },
+            { content: { contains: lc, mode: 'insensitive' } },
+            { fullTitle: { contains: lc, mode: 'insensitive' } }
+          ]
+        },
+        select: {
+          id: true,
+          title: true,
+          sectionNumber: true,
+          anchorId: true,
+          standardId: true,
+          standard: { select: { id: true, title: true } }
+        },
+        take: maxSections
+      });
+
+      matched.forEach((s) => {
+        const sectionId = `sec:${s.id}`;
+        if (!nodes[sectionId]) {
+          nodes[sectionId] = {
+            id: sectionId,
+            type: 'section',
+            label: `${s.sectionNumber} ${s.title}`,
+            size: 12,
+            meta: { id: s.id, standardId: s.standardId, anchorId: s.anchorId }
+          };
+        }
+        edges.push({ source: topicId, target: sectionId, weight: 1, kind: 'topic-section' });
+
+        const stdNodeId = ensureStandard(s.standard);
+        edges.push({ source: sectionId, target: stdNodeId, weight: 1, kind: 'section-standard' });
+      });
+    }
+
+    res.json({
+      nodes: Object.values(nodes),
+      edges,
+      metadata: {
+        topics: topicStats,
+        counts: { nodes: Object.keys(nodes).length, edges: edges.length }
+      }
+    });
+  } catch (error) {
+    console.error('Error building graph:', error);
+    res.status(500).json({ error: 'Failed to build graph' });
+  }
+});
+
 // 4. GET /api/sections/:id/adjacent - Get adjacent sections for navigation
 app.get('/api/sections/:id/adjacent', async (req, res) => {
   try {
