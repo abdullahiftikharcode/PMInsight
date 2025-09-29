@@ -416,9 +416,9 @@ const TopicMap = () => {
                     </g>
                   );
                   return link ? (
-                    <a key={n.id} href={link} style={{ cursor: 'pointer' }}>
+                    <Link key={n.id} to={link} style={{ cursor: 'pointer' }}>
                       {content}
-                    </a>
+                    </Link>
                   ) : content;
                 })}
                 </g>
