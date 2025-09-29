@@ -154,7 +154,7 @@ const ProcessGenerator = () => {
             </div>
           </div>
 
-          <form onSubmit={generate} className="row g-4">
+          <form onSubmit={generate} className="row g-4 align-items-start">
             <div className="col-lg-5">
               <div className="reddit-card" style={{position: 'sticky', top: '16px'}}>
                 <div className="reddit-card-body">
@@ -192,7 +192,7 @@ const ProcessGenerator = () => {
                   </div>
 
                   <div className="d-flex gap-2 flex-wrap">
-                    <button type="submit" className="btn-reddit">
+                    <button type="submit" className="btn-reddit" disabled={loading} aria-busy={loading} aria-disabled={loading}>
                     <FaMagic className="me-2" /> Generate Process
                     </button>
                     <button type="button" className="btn btn-outline-primary" onClick={exportJSON}>Export JSON</button>
@@ -204,14 +204,29 @@ const ProcessGenerator = () => {
             </div>
 
             <div className="col-lg-7" ref={printRef}>
-              <div className="reddit-card" style={{minHeight: '320px'}}>
-                <div className="reddit-card-body">
+              <div className="reddit-card" style={{minHeight: '320px', position: 'relative'}}>
+                {loading && (
+                  <div style={{position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(1px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2}}>
+                    <div className="d-flex flex-column align-items-center">
+                      <svg width="56" height="56" viewBox="0 0 50 50" role="img" aria-label="Loading">
+                        <g>
+                          <circle cx="25" cy="25" r="20" stroke="rgba(255,255,255,0.4)" strokeWidth="6" fill="none" />
+                          <path d="M25 5 a20 20 0 0 1 0 40" stroke="#0dcaf0" strokeWidth="6" fill="none" strokeLinecap="round">
+                            <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite" />
+                          </path>
+                        </g>
+                      </svg>
+                      <div className="mt-3 reddit-text-secondary">Generating tailored process… This may take a few seconds.</div>
+                    </div>
+                  </div>
+                )}
+                <div className="reddit-card-body" aria-busy={loading}>
                   <div className="d-flex align-items-center mb-3">
                     <FaListUl className="me-2" />
                     <h3 className="h5 fw-bold mb-0">Tailored Process</h3>
                   </div>
 
-                  {loading && <p className="reddit-text-secondary mb-0">Generating tailored process…</p>}
+                  {loading && <p className="reddit-text-secondary mb-0">Preparing recommendations using your inputs…</p>}
                   {!loading && !generated && (
                     <p className="reddit-text-secondary mb-0">Fill the form and click Generate to see the recommended steps with links to relevant standards sections.</p>
                   )}
