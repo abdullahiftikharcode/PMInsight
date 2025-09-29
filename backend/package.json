@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/src/index.js",
     "dev": "nodemon src/index.ts",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "ts-node prisma/seed.ts",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "node dist/prisma/seed.js",
     "db:reset": "prisma migrate reset",
     "upload:pmbok": "ts-node src/scripts/upload-pmbok.ts",
     "upload:iso21500": "ts-node src/scripts/upload-iso21500.ts",
@@ -24,18 +24,18 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.16.2",
-    "@types/jsdom": "^21.1.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "epub2": "^3.0.2",
     "express": "^5.1.0",
     "jsdom": "^27.0.0",
     "pdf-parse": "^1.1.1",
-    "prisma": "^6.16.2"
+    "prisma": "^6.16.2",
+    "@types/express": "^5.0.3",
+    "@types/cors": "^2.8.19",
+    "@types/jsdom": "^21.1.7"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
     "@types/node": "^24.5.2",
     "@types/pdf-parse": "^1.1.5",
     "nodemon": "^3.1.10",
