@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaRocket, FaAngleDoubleLeft, FaAngleDoubleRight, FaHome, FaBook, FaChartBar, FaCogs, FaProjectDiagram } from 'react-icons/fa';
 import { apiService, type TopicGraphNode, type TopicGraphEdge } from '../services/api';
 
@@ -104,6 +104,7 @@ const TopicMap = () => {
   const [dims, setDims] = useState({ width: 960, height: 600 });
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const navigate = useNavigate();
   const [mouse, setMouse] = useState<{ x: number; y: number } | null>(null);
   const [topicLimit, setTopicLimit] = useState<number>(8);
   const [sectionsPerTopic, setSectionsPerTopic] = useState<number>(12);
@@ -405,6 +406,7 @@ const TopicMap = () => {
                         setPins(prev => ({ ...prev, [n.id]: { x: p.x, y: p.y } }));
                       }}
                       onMouseUp={(e: React.MouseEvent) => { e.stopPropagation(); setDragId(null); }}
+                      onClick={(e) => { e.stopPropagation(); if (link) navigate(link); }}
                     >
                       <circle r={r} fill={fill} opacity={isActive ? 1 : 0.25} stroke="#ffffff" strokeWidth={1} style={{ cursor: 'grab' }} filter={showLabel || selectedId === n.id ? 'url(#nodeGlow)' : undefined} onClick={(e) => { e.stopPropagation(); setSelectedId(n.id); }} />
                       {showLabel && (
@@ -415,11 +417,7 @@ const TopicMap = () => {
                       )}
                     </g>
                   );
-                  return link ? (
-                    <Link key={n.id} to={link} style={{ cursor: 'pointer' }}>
-                      {content}
-                    </Link>
-                  ) : content;
+                  return content;
                 })}
                 </g>
               </svg>
