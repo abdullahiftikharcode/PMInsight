@@ -222,6 +222,10 @@ const Dashboard = () => {
                 <FaChartBar className="me-1" />
                 Insights
               </Link>
+              <Link to="/process-generator" className="reddit-nav-link">
+                <FaCog className="me-1" />
+                Process Generator
+              </Link>
               <Link to="/comparison" className="reddit-nav-link">
                 <FaBook className="me-1" />
                 Comparison

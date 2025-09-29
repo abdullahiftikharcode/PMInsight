@@ -605,7 +605,7 @@ app.get('/api/sections/:id/adjacent', async (req, res) => {
     });
 
     // Find current section index
-    const currentIndex = allSections.findIndex(s => s.id === currentSection.id);
+    const currentIndex = allSections.findIndex((s: any) => s.id === currentSection.id);
     
     if (currentIndex === -1) {
       return res.status(404).json({ error: 'Section not found in standard' });
@@ -625,6 +625,130 @@ app.get('/api/sections/:id/adjacent', async (req, res) => {
   } catch (error) {
     console.error('Error fetching adjacent sections:', error);
     res.status(500).json({ error: 'Failed to fetch adjacent sections' });
+  }
+});
+
+// 7.a POST /api/process/generate - Generate tailored process with evidence links
+app.post('/api/process/generate', async (req, res) => {
+  try {
+    const { projectName = '', scenarioId = 'it', lifecycle = 'hybrid', constraints = [], drivers = [] } = req.body || {};
+
+    // Build seed requirements text
+    const driverText = Array.isArray(drivers) ? drivers.join(', ') : String(drivers);
+    const constraintText = Array.isArray(constraints) ? constraints.join(', ') : String(constraints);
+
+    // Base phases by lifecycle
+    const basePhases: Record<string, string[]> = {
+      predictive: ['Initiation', 'Planning', 'Execution', 'Monitoring & Control', 'Closure'],
+      agile: ['Envision', 'Backlog & Planning', 'Sprints', 'Review & Retrospective', 'Release/Close'],
+      hybrid: ['Initiate', 'Plan', 'Iterate & Build', 'Control & Assure', 'Close']
+    };
+
+    // Seed activities per phase (simple heuristic)
+    const activitySeeds: Record<string, string[]> = {
+      Initiation: ['Define objectives', 'Identify stakeholders', 'Business case/charter'],
+      Planning: ['Scope & WBS', 'Schedule baseline', 'Cost baseline', 'Risk register', 'Quality plan', 'Comms plan'],
+      Execution: ['Deliver work packages', 'Manage team', 'Engage stakeholders', 'Quality assurance'],
+      'Monitoring & Control': ['Performance reporting', 'Change control', 'Risk & issue management'],
+      Closure: ['Transition/benefits', 'Lessons learned', 'Archive'],
+      Envision: ['Vision & outcomes', 'Roadmap', 'Team formation'],
+      'Backlog & Planning': ['Product backlog', 'Prioritization', 'Sprint planning'],
+      Sprints: ['Build increment', 'Daily coordination', 'Quality checks'],
+      'Review & Retrospective': ['Sprint review/demo', 'Retrospective improvements'],
+      'Release/Close': ['Release management', 'Support handover'],
+      Iterate: ['Incremental delivery'],
+      'Iterate & Build': ['Incremental delivery', 'Stakeholder feedback', 'QA gates'],
+      'Control & Assure': ['KPIs & reports', 'Risk/Change boards', 'Compliance checks']
+    };
+
+    const chosenPhases = basePhases[lifecycle] || basePhases.hybrid;
+
+    // Compose a keyword set to find supporting sections in standards
+    const topicKeywords = new Set<string>([
+      'risk', 'stakeholder', 'quality', 'schedule', 'scope', 'cost', 'communication', 'change', 'governance', 'planning', 'agile', 'iteration', 'benefits'
+    ]);
+    (Array.isArray(constraints) ? constraints : String(constraints).split(/[,;]+/)).forEach(c => c && topicKeywords.add(String(c).toLowerCase()));
+    (Array.isArray(drivers) ? drivers : String(drivers).split(/[,;]+/)).forEach(d => d && topicKeywords.add(String(d).toLowerCase()));
+
+    // Fetch candidate sections once
+    const allSections = await prisma.section.findMany({
+      include: { standard: true }
+    });
+
+    function scoreSection(section: any): number {
+      const text = `${section.title} ${section.content}`.toLowerCase();
+      let score = 0;
+      topicKeywords.forEach(kw => { if (kw && text.includes(kw)) score += 1; });
+      return score;
+    }
+
+    const topSections = allSections
+      .map((s: any): any => ({ ...s, _score: scoreSection(s) }))
+      .filter((s: any) => s._score > 0)
+      .sort((a: any, b: any) => b._score - a._score)
+      .slice(0, 30);
+
+    // Optional Gemini synthesis for tailored steps
+    let aiStepsByPhase: Record<string, string[]> | null = null;
+    if (process.env.GEMINI_API_KEY) {
+      const corpusSummary = topSections.map((s: any) => `• ${s.standard.title} - ${s.sectionNumber} ${s.title}`).join('\n');
+      const prompt = `Design a tailored project process for a ${scenarioId} project. Lifecycle: ${lifecycle}. Drivers: ${driverText}. Constraints: ${constraintText}.
+Use concise, actionable steps grouped by phases ${JSON.stringify(chosenPhases)}. Output strict JSON { phases: { [phase]: ["step", ...] }, summary: "..." }.
+Evidence context (titles only):\n${corpusSummary}`;
+      try {
+        const out = await model.generateContent(prompt);
+        const txt = (await out.response).text();
+        const match = txt.match(/\{[\s\S]*\}/);
+        if (match) {
+          const parsed = JSON.parse(match[0]);
+          if (parsed && parsed.phases) aiStepsByPhase = parsed.phases;
+        }
+      } catch (err) {
+        console.warn('Gemini synthesis failed, using heuristic generator');
+      }
+    }
+
+    // Build phases/activities/deliverables with citations
+    const phases = chosenPhases.map((phaseName: string) => {
+      const seeds = activitySeeds[phaseName] || ['Tailored activity'];
+      const activityNames = aiStepsByPhase?.[phaseName] || seeds;
+
+      const activities = activityNames.map((name: string) => {
+        // map each activity to 3 top supporting sections
+        const keywordsForActivity = name.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+        const scored = topSections
+          .map((s: any) => ({
+            s,
+            score: keywordsForActivity.reduce((acc, k) => acc + (s.content.toLowerCase().includes(k) || s.title.toLowerCase().includes(k) ? 1 : 0), 0)
+          }))
+          .sort((a: any, b: any) => b.score - a.score)
+          .slice(0, 3)
+          .filter((x: any) => x.score > 0)
+          .map((x: any) => ({
+            standardId: x.s.standardId,
+            standardTitle: x.s.standard.title,
+            sectionId: x.s.id,
+            sectionNumber: x.s.sectionNumber,
+            anchorId: x.s.anchorId,
+            title: x.s.title
+          }));
+
+        return {
+          name,
+          deliverables: [],
+          citations: scored
+        };
+      });
+
+      return { name: phaseName, activities };
+    });
+
+    const summary = `Tailored process for ${projectName || 'your project'} (${scenarioId}, ${lifecycle}). Constraints: ${constraintText || 'n/a'}. Drivers: ${driverText || 'n/a'}.`;
+
+    res.json({ summary, phases, generatedAt: new Date().toISOString() });
+  } catch (error) {
+    console.error('Error generating process:', error);
+    res.status(500).json({ error: 'Failed to generate process' });
   }
 });
 
@@ -724,10 +848,10 @@ async function findRelevantSections(keywords: string[]) {
   });
   
   // Simple keyword matching with scoring
-  const relevantSections = allSections.filter(section => {
+  const relevantSections = allSections.filter((section: any) => {
     const searchText = `${section.title} ${section.content}`.toLowerCase();
     return keywords.some(keyword => searchText.includes(keyword.toLowerCase()));
-  }).map(section => {
+  }).map((section: any) => {
     const searchText = `${section.title} ${section.content}`.toLowerCase();
     let relevanceScore = 0;
     
@@ -741,7 +865,7 @@ async function findRelevantSections(keywords: string[]) {
     });
     
     return { ...section, relevanceScore };
-  }).sort((a, b) => b.relevanceScore - a.relevanceScore);
+  }).sort((a: any, b: any) => b.relevanceScore - a.relevanceScore);
   
   return relevantSections;
 }
@@ -749,7 +873,7 @@ async function findRelevantSections(keywords: string[]) {
 // Generate comparison data with AI
 async function generateComparisonData(sections: any[], topic: any) {
   // Group sections by standard
-  const sectionsByStandard = sections.reduce((acc, section) => {
+  const sectionsByStandard = sections.reduce((acc: any, section: any) => {
     const standardId = section.standardId;
     if (!acc[standardId]) {
       acc[standardId] = {
@@ -759,7 +883,7 @@ async function generateComparisonData(sections: any[], topic: any) {
     }
     acc[standardId].sections.push(section);
     return acc;
-  }, {});
+  }, {} as any);
   
   try {
     // Use AI to generate insights

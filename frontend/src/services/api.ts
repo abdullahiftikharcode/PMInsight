@@ -75,6 +75,26 @@ export interface ComparisonResponse {
   generatedAt: string;
 }
 
+export interface GeneratedProcessResponse {
+  summary: string;
+  phases: Array<{
+    name: string;
+    activities: Array<{
+      name: string;
+      deliverables: string[];
+      citations: Array<{
+        standardId: number;
+        standardTitle: string;
+        sectionId: number;
+        sectionNumber: string;
+        anchorId: string;
+        title: string;
+      }>;
+    }>;
+  }>;
+  generatedAt: string;
+}
+
 // API functions
 export const apiService = {
   // Get all standards
@@ -140,6 +160,18 @@ export const apiService = {
   // Get comparison for specific topic
   getComparison: async (topicId: number): Promise<ComparisonResponse> => {
     const response = await api.get(`/comparison/topics/${topicId}`);
+    return response.data;
+  },
+
+  // Generate tailored process
+  generateProcess: async (payload: {
+    projectName?: string;
+    scenarioId: string;
+    lifecycle: 'predictive' | 'agile' | 'hybrid';
+    constraints: string[];
+    drivers: string[];
+  }): Promise<GeneratedProcessResponse> => {
+    const response = await api.post('/process/generate', payload);
     return response.data;
   },
 };
