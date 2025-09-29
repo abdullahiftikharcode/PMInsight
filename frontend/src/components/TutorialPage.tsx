@@ -13,7 +13,9 @@ import {
   FaCrown,
   FaBalanceScale,
   FaCog,
-  FaUsers
+  FaUsers,
+  FaProjectDiagram,
+  FaCogs
 } from 'react-icons/fa';
 
 const TutorialPage = () => {
@@ -264,6 +266,18 @@ const TutorialPage = () => {
           <Link to="/insights" className="reddit-sidebar-link" aria-label="Analytics">
             <FaChartBar className="me-2" />
             <span className="label">Analytics</span>
+          </Link>
+          <Link to="/comparison" className="reddit-sidebar-link" aria-label="Comparison">
+            <FaBook className="me-2" />
+            <span className="label">Comparison</span>
+          </Link>
+          <Link to="/process-generator" className="reddit-sidebar-link" aria-label="Process Generator">
+            <FaCogs className="me-2" />
+            <span className="label">Process Generator</span>
+          </Link>
+          <Link to="/map" className="reddit-sidebar-link" aria-label="Topic Map">
+            <FaProjectDiagram className="me-2" />
+            <span className="label">Topic Map</span>
           </Link>
         </div>
 

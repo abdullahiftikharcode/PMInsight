@@ -20,7 +20,8 @@ import {
   FaChartBar,
   FaTimes,
   FaAngleDoubleLeft,
-  FaAngleDoubleRight
+  FaAngleDoubleRight,
+  FaProjectDiagram
 } from 'react-icons/fa';
 
 const StandardReaderView = () => {
@@ -246,7 +247,7 @@ const StandardReaderView = () => {
             <span className="label">Comparison</span>
           </Link>
           <Link to="/map" className={`reddit-sidebar-link${location.pathname.startsWith('/map') ? ' active' : ''}`} aria-label="Topic Map">
-            <FaChartBar className="me-2" />
+            <FaProjectDiagram className="me-2" />
             <span className="label">Topic Map</span>
           </Link>
           <Link to="/process-generator" className={`reddit-sidebar-link${location.pathname.startsWith('/process-generator') ? ' active' : ''}`} aria-label="Process Generator">

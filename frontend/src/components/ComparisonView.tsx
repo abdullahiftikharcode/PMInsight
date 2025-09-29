@@ -11,7 +11,8 @@ import {
   FaAngleDoubleRight,
   FaExternalLinkAlt,
   FaCheckCircle,
-  FaExclamationTriangle as FaWarning
+  FaExclamationTriangle as FaWarning,
+  FaProjectDiagram
 } from 'react-icons/fa';
 
 const ComparisonView = () => {
@@ -125,6 +126,10 @@ const ComparisonView = () => {
           <Link to="/comparison" className="reddit-sidebar-link active">
             <FaBook className="me-2" />
             <span className="label">Comparison</span>
+          </Link>
+          <Link to="/map" className="reddit-sidebar-link">
+            <FaProjectDiagram className="me-2" />
+            <span className="label">Topic Map</span>
           </Link>
         </div>
       </div>

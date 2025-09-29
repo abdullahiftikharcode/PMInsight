@@ -13,7 +13,8 @@ import {
   FaUsers,
   FaSearch,
   FaAngleDoubleLeft,
-  FaAngleDoubleRight
+  FaAngleDoubleRight,
+  FaProjectDiagram
 } from 'react-icons/fa';
 
 const InsightsDashboard = () => {
@@ -250,7 +251,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean; setIsC
         <FaBook className="me-2" /> <span className="label">Comparison</span>
       </Link>
       <Link to="/map" className="reddit-sidebar-link" aria-label="Topic Map">
-        <FaChartBar className="me-2" /> <span className="label">Topic Map</span>
+        <FaProjectDiagram className="me-2" /> <span className="label">Topic Map</span>
       </Link>
       <Link to="/insights" className="reddit-sidebar-link active" aria-label="Analytics">
         <FaChartBar className="me-2" /> <span className="label">Analytics</span>

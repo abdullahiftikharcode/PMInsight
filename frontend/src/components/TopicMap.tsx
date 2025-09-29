@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaRocket, FaAngleDoubleLeft, FaAngleDoubleRight, FaHome, FaBook, FaChartBar, FaCogs } from 'react-icons/fa';
+import { FaRocket, FaAngleDoubleLeft, FaAngleDoubleRight, FaHome, FaBook, FaChartBar, FaCogs, FaProjectDiagram } from 'react-icons/fa';
 import { apiService, type TopicGraphNode, type TopicGraphEdge } from '../services/api';
 
 type Point = { x: number; y: number };
@@ -116,6 +116,9 @@ const TopicMap = () => {
   const [visibleStandards, setVisibleStandards] = useState<Set<number>>(new Set());
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => localStorage.getItem('sidebarCollapsed') === 'true');
   const inFlight = useRef<boolean>(false);
+  const hadDataRef = useRef<boolean>(false);
+  const EMPTY_NODES = useRef<TopicGraphNode[]>([]).current;
+  const EMPTY_EDGES = useRef<TopicGraphEdge[]>([]).current;
 
   useEffect(() => {
     const handleResize = () => {
@@ -143,16 +146,19 @@ const TopicMap = () => {
       if (inFlight.current) return; // prevent overlapping requests
       inFlight.current = true;
       try {
-        if (!data) { if (!loading) setLoading(true); } else { if (!refetching) setRefetching(true); }
+        if (!hadDataRef.current) { setLoading(true); } else { setRefetching(true); }
         const graph = await apiService.getGraph({ topicLimit, sectionsPerTopic });
-        if (!cancelled) setData(graph);
+        if (!cancelled) {
+          setData(graph);
+          hadDataRef.current = true;
+        }
       } catch {
         if (!cancelled) setError('Failed to load topic map');
       } finally {
         inFlight.current = false;
         if (!cancelled) {
-          if (loading) setLoading(false);
-          if (refetching) setRefetching(false);
+          setLoading(false);
+          setRefetching(false);
         }
       }
     };
@@ -160,7 +166,10 @@ const TopicMap = () => {
     return () => { cancelled = true; clearTimeout(t); };
   }, [topicLimit, sectionsPerTopic]);
 
-  const positions = useForceLayout(data?.nodes || [], data?.edges || [], dims.width, dims.height, pins);
+  // Compute layout unconditionally with stable empty arrays to keep hook order
+  const layoutNodes = data ? data.nodes : EMPTY_NODES;
+  const layoutEdges = data ? data.edges : EMPTY_EDGES;
+  const positions = useForceLayout(layoutNodes, layoutEdges, dims.width, dims.height, pins);
 
   const highlighted = useMemo(() => {
     if (!hoverId) return new Set<string>();
@@ -223,6 +232,7 @@ const TopicMap = () => {
     );
   }
 
+
   const copyLink = () => {
     const stdParam = Array.from(visibleStandards).join(',');
     const url = `${location.origin}/map?tl=${topicLimit}&sp=${sectionsPerTopic}${stdParam ? `&show=${stdParam}` : ''}`;
@@ -258,23 +268,29 @@ const TopicMap = () => {
           <Link to="/comparison" className="reddit-sidebar-link"><FaBook className="me-2" /><span className="label">Comparison</span></Link>
           <Link to="/insights" className="reddit-sidebar-link"><FaChartBar className="me-2" /><span className="label">Insights</span></Link>
           <Link to="/process-generator" className="reddit-sidebar-link"><FaCogs className="me-2" /><span className="label">Process Generator</span></Link>
-          <Link to="/map" className="reddit-sidebar-link active"><FaChartBar className="me-2" /><span className="label">Topic Map</span></Link>
+          <Link to="/map" className="reddit-sidebar-link active"><FaProjectDiagram className="me-2" /><span className="label">Topic Map</span></Link>
         </div>
       </div>
 
       <div className={`reddit-main${isCollapsed ? ' collapsed' : ''}`}>
-        <div className="reddit-nav">
-          <div className="container d-flex justify-content-between align-items-center">
-            <div>
-              <h1 className="h5 fw-bold reddit-text-primary mb-0">Visual Topic Map</h1>
-              <p className="reddit-text-secondary mb-0">Hover to highlight. Scroll to zoom. Drag to pan. Click sections to open. Click standards to browse.</p>
-            </div>
-            <div className="reddit-nav-links">
-              <Link to="/insights" className="reddit-nav-link">Insights</Link>
-              <Link to="/comparison" className="reddit-nav-link">Comparison</Link>
+        <header className="header-glass position-sticky" style={{top: 0, zIndex: 10}}>
+          <div className="container py-3">
+            <div className="d-flex align-items-center justify-content-between gap-3">
+              <div className="d-flex align-items-start gap-3">
+                <div className="rounded-circle" style={{width: 32, height: 32, background: 'linear-gradient(135deg, var(--reddit-orange), #ff6b35)'}}></div>
+                <div>
+                  <h1 className="h4 fw-bold gradient-text mb-1" style={{lineHeight: 1}}>Visual Topic Map</h1>
+                  <div className="small reddit-text-secondary">Hover to highlight. Scroll to zoom. Drag to pan. Click sections to open. Click standards to browse.</div>
+                </div>
+              </div>
+              <nav className="d-flex align-items-center gap-3">
+                <Link to="/insights" className="reddit-nav-link">Insights</Link>
+                <span className="text-muted">·</span>
+                <Link to="/comparison" className="reddit-nav-link">Comparison</Link>
+              </nav>
             </div>
           </div>
-        </div>
+        </header>
         <div className="reddit-content">
           <div className="reddit-card">
             <div className="reddit-card-body">
@@ -313,7 +329,7 @@ const TopicMap = () => {
                 role="img"
                 aria-label="Topic Map"
                 onWheel={(e) => {
-                  e.preventDefault();
+                  // Avoid passive event warning: rely on default wheel, adjust scale without preventDefault
                   const delta = e.deltaY < 0 ? 1.1 : 0.9;
                   const next = Math.min(3, Math.max(0.5, scale * delta));
                   setScale(next);

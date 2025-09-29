@@ -14,7 +14,8 @@ import {
   FaCog,
   FaUsers,
   FaAngleDoubleLeft,
-  FaAngleDoubleRight
+  FaAngleDoubleRight,
+  FaProjectDiagram
 } from 'react-icons/fa';
 
 const Dashboard = () => {
@@ -165,7 +166,7 @@ const Dashboard = () => {
             <span className="label">Comparison</span>
           </Link>
           <Link to="/map" className="reddit-sidebar-link">
-            <FaChartBar className="me-2" />
+            <FaProjectDiagram className="me-2" />
             <span className="label">Topic Map</span>
           </Link>
           <Link to="/tutorial" className="reddit-sidebar-link">
@@ -235,7 +236,7 @@ const Dashboard = () => {
                 Comparison
               </Link>
               <Link to="/map" className="reddit-nav-link">
-                <FaChartBar className="me-1" />
+                <FaProjectDiagram className="me-1" />
                 Topic Map
               </Link>
               <Link to="/tutorial" className="reddit-nav-link">
