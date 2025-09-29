@@ -7,7 +7,6 @@ import {
   FaBook, 
   FaChartBar, 
   FaRocket,
-  FaSpinner,
   FaExclamationTriangle,
   FaArrowRight,
   FaHome,

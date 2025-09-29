@@ -9,8 +9,6 @@ import {
   FaArrowLeft,
   FaPlay,
   FaHome,
-  FaGlobe,
-  FaCrown,
   FaBalanceScale,
   FaCog,
   FaUsers,

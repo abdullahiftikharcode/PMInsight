@@ -6,12 +6,9 @@ import {
   FaBook, 
   FaChartBar, 
   FaRocket,
-  FaSpinner,
-  FaExclamationTriangle,
   FaArrowRight,
   FaHome,
   FaCog,
-  FaUsers,
   FaAngleDoubleLeft,
   FaAngleDoubleRight
 } from 'react-icons/fa';
