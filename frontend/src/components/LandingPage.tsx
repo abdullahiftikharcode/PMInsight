@@ -5,13 +5,9 @@ import {
   FaSearch, 
   FaChartBar, 
   FaBalanceScale,
-  FaGlobe,
-  FaCrown,
   FaPlay,
   FaRocket,
-  FaHome,
   FaUsers,
-  FaCog,
   FaLightbulb
 } from 'react-icons/fa';
 
@@ -183,7 +179,7 @@ const LandingPage = () => {
           <div className="col-md-4">
             <div className="reddit-card reddit-fade-in" style={{animationDelay: '0.1s'}}>
               <div className="reddit-card-body text-center">
-                <FaGlobe className="display-4 reddit-text-primary mb-3" style={{color: 'var(--reddit-blue)'}} />
+                <span className="display-4 reddit-text-primary mb-3" role="img" aria-label="globe" style={{color: 'var(--reddit-blue)'}}>🌐</span>
                 <h3 className="h4 fw-bold reddit-text-primary mb-3">ISO 21500</h3>
                 <p className="reddit-text-secondary mb-4">
                   International standard providing guidance on project management concepts and processes.
@@ -199,7 +195,7 @@ const LandingPage = () => {
           <div className="col-md-4">
             <div className="reddit-card reddit-fade-in" style={{animationDelay: '0.2s'}}>
               <div className="reddit-card-body text-center">
-                <FaCrown className="display-4 reddit-text-primary mb-3" style={{color: 'var(--reddit-orange)'}} />
+                <span className="display-4 reddit-text-primary mb-3" role="img" aria-label="crown" style={{color: 'var(--reddit-orange)'}}>👑</span>
                 <h3 className="h4 fw-bold reddit-text-primary mb-3">PRINCE2</h3>
                 <p className="reddit-text-secondary mb-4">
                   Structured project management method that can be applied to any type of project.

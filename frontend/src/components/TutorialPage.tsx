@@ -7,7 +7,6 @@ import {
   FaChartBar, 
   FaArrowRight,
   FaArrowLeft,
-  FaPlay,
   FaHome,
   FaBalanceScale,
   FaCog,
