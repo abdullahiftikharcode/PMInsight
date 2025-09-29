@@ -79,6 +79,13 @@ const ComparisonView = () => {
   }
 
   const { topic, comparisonData } = comparison;
+  // Sanitize arrays to avoid blank/whitespace-only entries
+  const sanitizedSimilarities = (comparisonData.keySimilarities || [])
+    .map(s => (s ?? '').trim())
+    .filter(s => s.length > 0);
+  const sanitizedDifferences = (comparisonData.keyDifferences || [])
+    .map(s => (s ?? '').trim())
+    .filter(s => s.length > 0);
 
   return (
     <div className="min-vh-100 bg-animated position-relative">
@@ -296,19 +303,19 @@ const ComparisonView = () => {
           </section>
 
           {/* Similarities and Differences */}
-          <div className="row g-4">
+          <div className="row g-4 no-equal-height">
             {/* Key Similarities */}
             <div className="col-lg-6">
-              <div className="reddit-card h-100">
-                <div className="reddit-card-body">
+              <div className="reddit-card content-auto">
+                <div className="reddit-card-body no-gap">
                   <div className="d-flex align-items-center mb-4">
                     <div className="me-3">
                       <FaCheckCircle className="text-success" style={{fontSize: '1.5rem'}} />
                     </div>
                     <h3 className="h5 fw-bold reddit-text-primary mb-0">Key Similarities</h3>
                   </div>
-                  <ul className="list-unstyled">
-                    {comparisonData.keySimilarities.map((similarity, index) => (
+                  <ul className="list-unstyled mb-0">
+                    {sanitizedSimilarities.map((similarity, index) => (
                       <li key={index} className="d-flex align-items-start mb-3">
                         <div className="me-3 mt-1">
                           <div className="bg-success rounded-circle" style={{width: '8px', height: '8px'}}></div>
@@ -323,16 +330,16 @@ const ComparisonView = () => {
 
             {/* Key Differences */}
             <div className="col-lg-6">
-              <div className="reddit-card h-100">
-                <div className="reddit-card-body">
+              <div className="reddit-card content-auto">
+                <div className="reddit-card-body no-gap">
                   <div className="d-flex align-items-center mb-4">
                     <div className="me-3">
                       <FaWarning className="text-warning" style={{fontSize: '1.5rem'}} />
                     </div>
                     <h3 className="h5 fw-bold reddit-text-primary mb-0">Key Differences</h3>
                   </div>
-                  <ul className="list-unstyled">
-                    {comparisonData.keyDifferences.map((difference, index) => (
+                  <ul className="list-unstyled mb-0">
+                    {sanitizedDifferences.map((difference, index) => (
                       <li key={index} className="d-flex align-items-start mb-3">
                         <div className="me-3 mt-1">
                           <div className="bg-warning rounded-circle" style={{width: '8px', height: '8px'}}></div>

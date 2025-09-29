@@ -260,6 +260,9 @@
   justify-content: space-between;
 }
 
+/* Remove forced spacing for comparison lists to avoid top/bottom empty space */
+.reddit-card-body.no-gap { justify-content: flex-start; }
+
 .reddit-card-footer {
   padding: var(--space-md) var(--space-lg);
   border-top: 1px solid var(--border-light);
@@ -1337,6 +1340,11 @@
   display: flex;
   flex-direction: column;
 }
+
+/* Opt-out for equal-height behavior on specific rows/cards */
+.row.g-4.no-equal-height > [class*="col-"] { display: block; }
+.row.g-4.no-equal-height .reddit-card { flex: initial; }
+.reddit-card.content-auto { min-height: auto; }
 
 /* Standard Grid Cards */
 .standard-grid-card {
