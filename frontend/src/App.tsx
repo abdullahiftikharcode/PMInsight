@@ -10,6 +10,7 @@ import SearchResults from './components/SearchResults';
 import TopicSelector from './components/TopicSelector';
 import ComparisonView from './components/ComparisonView';
 import TopicMap from './components/TopicMap';
+import NotFound from './components/NotFound';
 
 import './App.css';
 
@@ -30,28 +31,7 @@ function App() {
           <Route path="/process-generator" element={<ProcessGenerator />} />
           <Route path="/comparison/:topicId" element={<ComparisonView />} />
           <Route path="/search" element={<SearchResults query="" onBack={() => window.history.back()} />} />
-          <Route path="*" element={
-            <div className="reddit-layout">
-              <div className="reddit-sidebar">
-                <div className="reddit-sidebar-section">
-                  <div className="reddit-nav-brand">
-                    PMInsight
-                  </div>
-                </div>
-              </div>
-              <div className="reddit-main">
-                <div className="reddit-content">
-                  <div className="reddit-error">
-                    <h2 className="h3 fw-bold reddit-text-primary mb-3">Page Not Found</h2>
-                    <p className="reddit-text-secondary mb-4">The page you are looking for does not exist.</p>
-                    <a href="/" className="btn-reddit">
-                      Go Home
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          } />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </Router>
