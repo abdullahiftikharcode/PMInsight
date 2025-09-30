@@ -72,6 +72,22 @@ Alternatives: Client-only computation was too heavy; naive querying caused Prism
 - Tooltips clamped within viewport; passive event listeners respected; React hook order stabilized to remove update-depth errors
 - 404 page is branded and provides quick paths back to main features
 
+3.9 Retrieval Strategy Without Embeddings (Resource Constraints)
+- Decision: Do not use vector embeddings or a vector database in this phase. Rely on deterministic keyword and heuristic scoring for search, comparison, and process-citation retrieval.
+- Rationale:
+  - Operational cost/complexity: Hosting and maintaining a vector DB (pgvector/Weaviate/FAISS service) exceeds the course scope and available resources.
+  - Ingestion overhead: Chunking, embedding, re-embedding on data changes, and index maintenance add time and cost.
+  - Determinism and grading: Keyword+rule-based retrieval provides stable, explainable outcomes with transparent evidence links—easier to verify in an academic context.
+  - Latency: Avoids additional network round-trips and cold starts to embedding services; current dataset size is modest, so SQL-based matching is sufficient.
+- Approach implemented:
+  - SQL filtering with case-insensitive `contains` on `title`, `fullTitle`, and `content`.
+  - Lightweight similarity heuristics (title match > content match; partial word overlaps) to rank results.
+  - Topic-driven queries (predefined keyword sets) for comparison and process generation evidence.
+- Upgrade path (Future Improvements):
+  - Introduce `tsvector` indexes in Postgres for faster full-text search.
+  - Optionally adopt Meilisearch/OpenSearch for fuzzy ranking and typo tolerance.
+  - Add embeddings (pgvector) once resources allow, keeping the same API surface so the UI remains unchanged.
+
 4) Performance Considerations
 - Graph endpoint optimized to avoid expensive full scans and pool exhaustion
 - Debounced controls (e.g., sliders) to prevent overfetching
