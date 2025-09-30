@@ -49,14 +49,122 @@ const ComparisonView = () => {
 
   if (loading) {
     return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-animated">
-        <div className="text-center glass-card p-5 rounded-4">
-          <div className="loading-spinner mx-auto mb-4"></div>
-          <p className="h4 gradient-text fw-semibold mb-4">Loading Comparison Analysis...</p>
-          <div className="bouncing-dots">
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
+      <div className="min-vh-100 bg-animated" aria-busy={true} aria-live="polite">
+        {/* Local skeleton styles */}
+        <style>
+          {`
+            @keyframes skeleton-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+            .skeleton {
+              position: relative;
+              overflow: hidden;
+              background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.06) 63%);
+              background-size: 400% 100%;
+              animation: skeleton-shimmer 1.6s ease-in-out infinite;
+              border-radius: 8px;
+            }
+            .skeleton-pill { border-radius: 999px; }
+            .skeleton-card { border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(6px); }
+          `}
+        </style>
+
+        {/* Header skeleton */}
+        <header className="header-glass position-sticky" style={{ top: 0, zIndex: 10 }}>
+          <div className="container">
+            <div className="row align-items-center py-4">
+              <div className="col-md-8">
+                <div className="d-flex align-items-center gap-4">
+                  <div className="skeleton" style={{ width: 28, height: 28, borderRadius: 6 }}></div>
+                  <div className="w-100">
+                    <div className="skeleton" style={{ height: 32, width: '60%', marginBottom: 8 }}></div>
+                    <div className="skeleton" style={{ height: 16, width: '40%' }}></div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-4 text-end">
+                <div className="d-inline-flex align-items-center gap-2">
+                  <div className="skeleton skeleton-pill" style={{ width: 10, height: 10 }}></div>
+                  <div className="skeleton skeleton-pill" style={{ width: 160, height: 14 }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Body skeleton */}
+        <div className="container py-5">
+          {/* Summary card */}
+          <div className="reddit-card skeleton-card mb-5">
+            <div className="reddit-card-body">
+              <div className="d-flex align-items-center gap-2 mb-3">
+                <div className="skeleton" style={{ width: 18, height: 18, borderRadius: 4 }}></div>
+                <div className="skeleton" style={{ height: 22, width: 180 }}></div>
+              </div>
+              <div className="skeleton" style={{ height: 12, width: '95%', marginBottom: 10 }}></div>
+              <div className="skeleton" style={{ height: 12, width: '88%', marginBottom: 10 }}></div>
+              <div className="skeleton" style={{ height: 12, width: '92%', marginBottom: 10 }}></div>
+              <div className="skeleton" style={{ height: 12, width: '75%' }}></div>
+            </div>
+          </div>
+
+          {/* Standards Analysis skeleton cards */}
+          <div className="row g-4 mb-5">
+            {[0,1].map(i => (
+              <div key={i} className="col-lg-6">
+                <div className="reddit-card skeleton-card h-100">
+                  <div className="reddit-card-body">
+                    <div className="d-flex align-items-center justify-content-between mb-4">
+                      <div className="skeleton" style={{ height: 20, width: '60%' }}></div>
+                      <div className="skeleton" style={{ width: 20, height: 20, borderRadius: 4 }}></div>
+                    </div>
+                    <div className="skeleton" style={{ height: 12, width: '95%', marginBottom: 8 }}></div>
+                    <div className="skeleton" style={{ height: 12, width: '90%', marginBottom: 8 }}></div>
+                    <div className="skeleton" style={{ height: 12, width: '85%', marginBottom: 20 }}></div>
+
+                    {/* Relevant sections list items */}
+                    {[0,1,2].map(j => (
+                      <div key={j} className="d-flex align-items-center justify-content-between p-3 rounded-3 mb-3" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <div className="flex-grow-1 me-3">
+                          <div className="skeleton" style={{ height: 14, width: '70%', marginBottom: 6 }}></div>
+                          <div className="skeleton" style={{ height: 10, width: '40%' }}></div>
+                        </div>
+                        <div className="d-flex align-items-center gap-3">
+                          <div className="skeleton skeleton-pill" style={{ width: 90, height: 26 }}></div>
+                          <div className="skeleton" style={{ width: 36, height: 36, borderRadius: 18 }}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Similarities/Differences skeleton lists */}
+          <div className="row g-4">
+            {[0,1].map(k => (
+              <div key={k} className="col-lg-6">
+                <div className="reddit-card skeleton-card">
+                  <div className="reddit-card-body">
+                    <div className="d-flex align-items-center mb-4">
+                      <div className="skeleton" style={{ width: 24, height: 24, borderRadius: 6, marginRight: 12 }}></div>
+                      <div className="skeleton" style={{ height: 18, width: 160 }}></div>
+                    </div>
+                    {[0,1,2,3].map(n => (
+                      <div key={n} className="d-flex align-items-start mb-3">
+                        <div className="skeleton" style={{ width: 8, height: 8, borderRadius: 4, marginRight: 12, marginTop: 6 }}></div>
+                        <div className="skeleton" style={{ height: 12, width: '85%' }}></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Subtle inline progress indicator */}
+          <div className="text-center mt-5">
+            <div className="skeleton skeleton-pill mx-auto" style={{ width: 220, height: 10 }}></div>
+            <div className="text-muted small mt-3">Preparing comparison insights…</div>
           </div>
         </div>
       </div>
