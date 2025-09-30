@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import LoadingSkeleton from './LoadingSkeleton';
 import { apiService, type Standard } from '../services/api';
 import SearchResults from './SearchResults';
 import { 
@@ -69,28 +70,7 @@ const Dashboard = () => {
     setSearchQuery('');
   };
 
-  if (loading) {
-    return (
-      <div className="reddit-layout">
-        <div className="reddit-sidebar">
-          <div className="reddit-sidebar-section">
-            <div className="reddit-nav-brand">
-              <FaRocket />
-              PMInsight
-            </div>
-          </div>
-        </div>
-        <div className="reddit-main">
-          <div className="reddit-content">
-            <div className="reddit-loading">
-              <div className="reddit-spinner"></div>
-              <p>Loading standards...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton variant="dashboard" />;
 
   if (error) {
     return (

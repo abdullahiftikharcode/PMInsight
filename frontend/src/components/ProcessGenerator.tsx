@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaRocket, FaAngleDoubleLeft, FaAngleDoubleRight, FaHome, FaBook, FaChartBar, FaCogs, FaListUl, FaMagic, FaExternalLinkAlt, FaProjectDiagram } from 'react-icons/fa';
 import { apiService, type GeneratedProcessResponse } from '../services/api';
+import LoadingSkeleton from './LoadingSkeleton';
 
 type ScenarioTemplate = {
   id: string;
@@ -222,6 +223,11 @@ const ProcessGenerator = () => {
                   </div>
                 )}
                 <div className="reddit-card-body" aria-busy={loading}>
+                  {loading && (
+                    <div className="mb-3">
+                      <LoadingSkeleton variant="process" />
+                    </div>
+                  )}
                   <div className="d-flex align-items-center mb-3">
                     <FaListUl className="me-2" />
                     <h3 className="h5 fw-bold mb-0">Tailored Process</h3>

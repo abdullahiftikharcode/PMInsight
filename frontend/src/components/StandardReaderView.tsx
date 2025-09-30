@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { apiService, type StandardDetail, type SearchResult } from '../services/api';
+import LoadingSkeleton from './LoadingSkeleton';
 import { useBookmarks } from '../hooks/useBookmarks';
 import { 
   FaSearch, 
@@ -146,36 +147,7 @@ const StandardReaderView = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="reddit-layout">
-        <div className={`reddit-sidebar${isCollapsed ? ' collapsed' : ''}`}>
-          <div className="reddit-sidebar-section">
-            <Link to="/" className="reddit-nav-brand">
-              <FaRocket />
-              <span className="label">PMInsight</span>
-            </Link>
-            <button
-              className="sidebar-toggle"
-              onClick={() => { const next = !isCollapsed; setIsCollapsed(next); localStorage.setItem('sidebarCollapsed', String(next)); }}
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              title={isCollapsed ? 'Expand' : 'Collapse'}
-            >
-              {isCollapsed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
-            </button>
-          </div>
-        </div>
-        <div className={`reddit-main${isCollapsed ? ' collapsed' : ''}`}>
-          <div className="reddit-content">
-            <div className="reddit-loading">
-              <div className="reddit-spinner"></div>
-              <p>Loading standard...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton variant="standard" />;
 
   if (error || !standard) {
     return (

@@ -12,6 +12,7 @@ import {
   FaAngleDoubleLeft,
   FaAngleDoubleRight
 } from 'react-icons/fa';
+import LoadingSkeleton from './LoadingSkeleton';
 
 const TopicSelector = () => {
   const [topics, setTopics] = useState<ComparisonTopic[]>([]);
@@ -55,21 +56,7 @@ const TopicSelector = () => {
     localStorage.setItem('sidebarCollapsed', newCollapsed.toString());
   };
 
-  if (loading) {
-    return (
-      <div className="min-vh-100 d-flex align-items-center justify-content-center bg-animated">
-        <div className="text-center glass-card p-5 rounded-4">
-          <div className="loading-spinner mx-auto mb-4"></div>
-          <p className="h4 gradient-text fw-semibold mb-4">Loading Comparison Topics...</p>
-          <div className="bouncing-dots">
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton />;
 
   if (error) {
     return (

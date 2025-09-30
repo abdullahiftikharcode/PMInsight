@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../services/api';
+import LoadingSkeleton from './LoadingSkeleton';
 import {
   FaChartBar,
   FaBook,
@@ -48,19 +49,7 @@ const InsightsDashboard = () => {
   // ------------------------
   // Loading State
   // ------------------------
-  if (loading) {
-    return (
-      <div className="reddit-layout">
-        <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-        <div className={`reddit-main${isCollapsed ? ' collapsed' : ''}`}>
-          <div className="reddit-content d-flex flex-column align-items-center justify-content-center py-5">
-            <div className="reddit-spinner mb-3"></div>
-            <p className="reddit-text-secondary fs-5">Loading insights...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton variant="insights" />;
 
   // ------------------------
   // Error State
