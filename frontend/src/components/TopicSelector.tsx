@@ -10,7 +10,8 @@ import {
   FaHome,
   FaCog,
   FaAngleDoubleLeft,
-  FaAngleDoubleRight
+  FaAngleDoubleRight,
+  FaProjectDiagram
 } from 'react-icons/fa';
 import LoadingSkeleton from './LoadingSkeleton';
 
@@ -121,6 +122,7 @@ const TopicSelector = () => {
             <FaCog className="me-2" />
             <span className="label">Process Generator</span>
           </Link>
+          <Link to="/map" className="reddit-sidebar-link"><FaProjectDiagram className="me-2" /><span className="label">Topic Map</span></Link>
         </div>
       </div>
 
