@@ -19,6 +19,15 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
 
+// Health check endpoint
+app.get('/api/ping', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
 // 1. GET /api/standards - Returns a list of all standards
 app.get('/api/standards', async (req, res) => {
