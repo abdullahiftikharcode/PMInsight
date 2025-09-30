@@ -28,6 +28,25 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
 
+  const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const highlightHTML = (text: string, q: string) => {
+    if (!text) return '';
+    const safeQ = escapeRegex(q.trim());
+    if (!safeQ) return text;
+    const re = new RegExp(`(${safeQ})`, 'gi');
+    return text.replace(re, '<mark>$1</mark>');
+  };
+  const buildSnippet = (text: string, q: string, maxLen = 300) => {
+    if (!text) return '';
+    const lower = text.toLowerCase();
+    const idx = lower.indexOf(q.toLowerCase());
+    if (idx === -1) return text.substring(0, maxLen);
+    const start = Math.max(0, idx - 120);
+    const end = Math.min(text.length, idx + q.length + 180);
+    const snippet = (start > 0 ? '…' : '') + text.substring(start, end) + (end < text.length ? '…' : '');
+    return snippet;
+  };
+
   useEffect(() => {
     const performSearch = async () => {
       try {
@@ -202,10 +221,10 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
             <FaBook className="me-2" />
             <span className="label">Standards</span>
           </Link>
-          <button onClick={onBack} className="reddit-sidebar-link">
+          <Link to="/standards" onClick={onBack} className="reddit-sidebar-link">
             <FaArrowLeft className="me-2" />
             <span className="label">Back to Standards</span>
-          </button>
+          </Link>
         </div>
 
         <div className="reddit-sidebar-section">
@@ -316,9 +335,9 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
                       <div className="reddit-card-body">
                         <div className="d-flex justify-content-between align-items-start mb-3">
                           <div className="flex-grow-1">
-                          <h3 className="h5 fw-bold reddit-text-primary mb-2">
-                            {result.sectionNumber || 'N/A'} {result.title || 'Untitled'}
-                            </h3>
+                          <h3 className="h5 fw-bold reddit-text-primary mb-2" dangerouslySetInnerHTML={{
+                            __html: `${result.sectionNumber || 'N/A'} ${highlightHTML(result.title || 'Untitled', query)}`
+                          }} />
                             <div className="d-flex align-items-center reddit-text-secondary mb-2">
                               <FaBook className="me-2" />
                             <span className="fw-medium">{result.standardTitle || 'Unknown Standard'}</span>
@@ -336,10 +355,9 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
                         </div>
                         
                         <div className="reddit-text-secondary mb-3">
-                          <p>
-                          {result.content ? result.content.substring(0, 300) : 'No content available'}
-                          {result.content && result.content.length > 300 && '...'}
-                          </p>
+                          <p dangerouslySetInnerHTML={{
+                            __html: highlightHTML(buildSnippet(result.content || '', query), query)
+                          }} />
                         </div>
                         
                         <div className="d-flex justify-content-between align-items-center">
