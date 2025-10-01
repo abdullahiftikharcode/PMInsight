@@ -135,19 +135,33 @@ const TopicSelector = () => {
             <div className="row align-items-center py-4">
               <div className="col-md-8">
                 <div className="d-flex align-items-center gap-4">
-                  <Link to="/" className="text-info text-decoration-none">
+                  <Link 
+                    to="/" 
+                    className="text-decoration-none"
+                    style={{
+                      color: '#FF4500',
+                      fontSize: '1.25rem',
+                      transition: 'color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#FF5700'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#FF4500'}
+                  >
                     <FaHome />
                   </Link>
                   <div>
-                    <h1 className="display-5 fw-bold gradient-text text-glow mb-0">Standards Comparison</h1>
-                    <p className="text-secondary fs-5 mt-1 mb-0">Compare project management standards across different topics</p>
+                    <h1 className="display-5 fw-bold mb-0" style={{color: '#D7DADC'}}>
+                      Standards Comparison
+                    </h1>
+                    <p className="mt-1 mb-0" style={{fontSize: '1.1rem', color: '#818384'}}>
+                      Compare project management standards across different topics
+                    </p>
                   </div>
                 </div>
               </div>
               <div className="col-md-4 text-end">
                 <div className="status-indicator">
                   <div className="status-dot green"></div>
-                  <span className="text-secondary fw-medium">Comparison Engine</span>
+                  <span style={{color: '#818384', fontWeight: 500}}>Comparison Engine</span>
                 </div>
               </div>
             </div>
@@ -161,22 +175,23 @@ const TopicSelector = () => {
               <div 
                 className="reddit-card" 
                 style={{
-                  borderRadius: '15px', 
-                  boxShadow: searchFocused ? '0 10px 30px rgba(255, 107, 53, 0.25)' : '0 4px 20px rgba(0,0,0,0.08)',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: searchFocused ? '1px solid rgba(255, 107, 53, 0.4)' : '1px solid rgba(255, 107, 53, 0.15)',
-                  padding: '1.5rem'
+                  borderRadius: '12px', 
+                  boxShadow: searchFocused ? '0 4px 12px rgba(255, 69, 0, 0.15)' : 'none',
+                  background: '#1A1A1B',
+                  border: searchFocused ? '1px solid #FF4500' : '1px solid #343536',
+                  padding: '1.5rem',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 <div className="input-group" style={{height: '56px'}}>
                   <span 
                     className="input-group-text bg-transparent border-0" 
                     style={{
-                      color: 'var(--reddit-orange)',
+                      color: searchFocused ? '#FF4500' : '#818384',
                       fontSize: '1.2rem',
                       paddingLeft: '1.25rem',
                       paddingRight: '1rem',
-                      borderRight: 'none'
+                      transition: 'color 0.2s ease'
                     }}
                   >
                     <FaSearch />
@@ -191,28 +206,35 @@ const TopicSelector = () => {
                     onBlur={() => setSearchFocused(false)}
                     style={{
                       fontSize: '1rem',
-                      color: 'var(--text-primary)',
+                      color: '#D7DADC',
                       paddingLeft: '0.75rem',
                       paddingRight: '1rem',
                       height: '56px',
-                      borderLeft: 'none',
-                      borderRight: 'none'
+                      outline: 'none'
                     }}
                   />
                   {searchQuery && (
                     <button 
-                      className="btn btn-outline-secondary border-0 rounded-circle"
+                      className="btn border-0 rounded-circle"
                       onClick={() => setSearchQuery('')}
                       style={{
-                        color: 'var(--text-secondary)',
+                        color: '#818384',
                         width: '40px',
                         height: '40px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         marginRight: '1rem',
-                        background: searchFocused ? 'rgba(255, 107, 53, 0.15)' : 'rgba(255, 107, 53, 0.1)',
-                        border: searchFocused ? '1px solid rgba(255, 107, 53, 0.35)' : '1px solid rgba(255, 107, 53, 0.2)'
+                        background: '#272729',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#343536';
+                        e.currentTarget.style.color = '#D7DADC';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#272729';
+                        e.currentTarget.style.color = '#818384';
                       }}
                       title="Clear search"
                     >
@@ -234,25 +256,25 @@ const TopicSelector = () => {
                   className="text-decoration-none"
                 >
                   <div 
-                    className="reddit-card topic-card reddit-fade-in h-100 hover-lift"
+                    className="reddit-card topic-card reddit-fade-in h-100"
                     style={{ 
                       animationDelay: `${index * 0.1}s`,
-                      transition: 'all 0.3s ease',
+                      transition: 'all 0.2s ease',
                       cursor: 'pointer',
-                      borderRadius: '15px',
-                      border: '1px solid rgba(255, 107, 53, 0.1)',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))'
+                      borderRadius: '12px',
+                      border: '1px solid #343536',
+                      background: '#1A1A1B',
+                      boxShadow: 'none'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-5px)';
-                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(255, 107, 53, 0.2)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 107, 53, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.borderColor = '#FF4500';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 69, 0, 0.15)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 107, 53, 0.1)';
+                      e.currentTarget.style.borderColor = '#343536';
+                      e.currentTarget.style.boxShadow = 'none';
                     }}
                   >
                     <div className="reddit-card-body d-flex flex-column h-100 p-4">
@@ -263,8 +285,8 @@ const TopicSelector = () => {
                           style={{
                             width: '80px',
                             height: '80px',
-                            background: 'linear-gradient(135deg, var(--reddit-orange), #ff6b35)',
-                            boxShadow: '0 4px 15px rgba(255, 107, 53, 0.3)'
+                            background: '#FF4500',
+                            border: '3px solid #272729'
                           }}
                         >
                           <FaBook className="text-white" style={{fontSize: '2rem'}} />
@@ -272,12 +294,12 @@ const TopicSelector = () => {
                       </div>
 
                       {/* Topic Title */}
-                      <h3 className="h5 fw-bold reddit-text-primary mb-3 text-center">
+                      <h3 className="h5 fw-bold mb-3 text-center" style={{color: '#D7DADC'}}>
                         {topic.name}
                       </h3>
 
                       {/* Topic Description */}
-                      <p className="reddit-text-secondary mb-4 flex-grow-1 text-center">
+                      <p className="mb-4 flex-grow-1 text-center" style={{color: '#818384', fontSize: '0.95rem', lineHeight: '1.5'}}>
                         {topic.description}
                       </p>
 
@@ -289,11 +311,12 @@ const TopicSelector = () => {
                               key={idx} 
                               className="badge rounded-pill"
                               style={{
-                                backgroundColor: 'rgba(255, 107, 53, 0.1)',
-                                color: 'var(--reddit-orange)',
-                                border: '1px solid rgba(255, 107, 53, 0.2)',
+                                backgroundColor: '#272729',
+                                color: '#FF4500',
+                                border: '1px solid #343536',
                                 fontSize: '0.75rem',
-                                padding: '0.4rem 0.8rem'
+                                padding: '0.4rem 0.8rem',
+                                fontWeight: 500
                               }}
                             >
                               {keyword}
@@ -303,11 +326,12 @@ const TopicSelector = () => {
                             <span 
                               className="badge rounded-pill"
                               style={{
-                                backgroundColor: 'rgba(108, 117, 125, 0.1)',
-                                color: '#6c757d',
-                                border: '1px solid rgba(108, 117, 125, 0.2)',
+                                backgroundColor: '#272729',
+                                color: '#818384',
+                                border: '1px solid #343536',
                                 fontSize: '0.75rem',
-                                padding: '0.4rem 0.8rem'
+                                padding: '0.4rem 0.8rem',
+                                fontWeight: 500
                               }}
                             >
                               +{topic.keywords.length - 4} more
@@ -319,16 +343,19 @@ const TopicSelector = () => {
                       {/* Action Button */}
                       <div className="d-flex align-items-center justify-content-center">
                         <div 
-                          className="btn btn-primary btn-sm d-flex align-items-center"
+                          className="btn btn-sm d-flex align-items-center"
                           style={{
-                            borderRadius: '25px',
+                            borderRadius: '20px',
                             padding: '0.6rem 1.5rem',
                             fontSize: '0.9rem',
-                            fontWeight: '500',
-                            background: 'linear-gradient(135deg, var(--reddit-orange), #ff6b35)',
+                            fontWeight: 600,
+                            background: '#FF4500',
                             border: 'none',
-                            boxShadow: '0 2px 10px rgba(255, 107, 53, 0.3)'
+                            color: '#FFFFFF',
+                            transition: 'all 0.2s ease'
                           }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#FF5700'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = '#FF4500'}
                         >
                           <FaBook className="me-2" />
                           Compare Standards
@@ -343,17 +370,33 @@ const TopicSelector = () => {
             ) : (
               <div className="col-12">
                 <div className="text-center py-5">
-                  <div className="reddit-card" style={{borderRadius: '15px', background: 'rgba(255,255,255,0.02)'}}>
+                  <div className="reddit-card" style={{borderRadius: '12px', background: '#1A1A1B', border: '1px solid #343536'}}>
                     <div className="reddit-card-body p-5">
-                      <FaSearch className="display-4 reddit-text-muted mb-3" />
-                      <h4 className="reddit-text-primary mb-3">No topics found</h4>
-                      <p className="reddit-text-secondary mb-4">
+                      <FaSearch className="display-4 mb-3" style={{color: '#818384'}} />
+                      <h4 className="mb-3" style={{color: '#D7DADC'}}>No topics found</h4>
+                      <p className="mb-4" style={{color: '#818384'}}>
                         {searchQuery ? 'Try different keywords or check your spelling.' : 'No comparison topics available.'}
                       </p>
                       {searchQuery && (
                         <button 
-                          className="btn btn-outline-primary"
+                          className="btn"
                           onClick={() => setSearchQuery('')}
+                          style={{
+                            background: '#272729',
+                            color: '#D7DADC',
+                            border: '1px solid #343536',
+                            borderRadius: '20px',
+                            padding: '0.5rem 1.5rem',
+                            fontWeight: 500
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#343536';
+                            e.currentTarget.style.borderColor = '#FF4500';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#272729';
+                            e.currentTarget.style.borderColor = '#343536';
+                          }}
                         >
                           Clear Search
                         </button>
@@ -369,10 +412,10 @@ const TopicSelector = () => {
           {/* Stats */}
           <div className="row mt-5">
             <div className="col-12">
-              <div className="reddit-card" style={{borderRadius: '15px', background: 'linear-gradient(135deg, rgba(255,107,53,0.05), rgba(0,123,255,0.05))'}}>
+              <div className="reddit-card" style={{borderRadius: '12px', background: '#1A1A1B', border: '1px solid #343536'}}>
                 <div className="reddit-card-body text-center p-4">
-                  <h5 className="reddit-text-primary mb-4">
-                    <FaChartBar className="me-2" />
+                  <h5 className="mb-4" style={{color: '#D7DADC', fontWeight: 600}}>
+                    <FaChartBar className="me-2" style={{color: '#FF4500'}} />
                     Comparison Engine Stats
                   </h5>
                   <div className="row g-4">
@@ -383,16 +426,16 @@ const TopicSelector = () => {
                           style={{
                             width: '60px',
                             height: '60px',
-                            background: 'linear-gradient(135deg, var(--reddit-orange), #ff6b35)',
-                            boxShadow: '0 4px 15px rgba(255, 107, 53, 0.3)'
+                            background: '#FF4500',
+                            border: '3px solid #272729'
                           }}
                         >
                           <FaBook className="text-white" />
                         </div>
-                        <div className="fw-bold fs-3" style={{ color: 'var(--reddit-orange)' }}>
+                        <div className="fw-bold fs-3" style={{ color: '#FF4500' }}>
                           {topics.length}
                         </div>
-                        <div className="reddit-text-secondary small text-uppercase fw-medium">
+                        <div className="small text-uppercase fw-medium" style={{color: '#818384'}}>
                           Comparison Topics
                         </div>
                       </div>
@@ -404,16 +447,16 @@ const TopicSelector = () => {
                           style={{
                             width: '60px',
                             height: '60px',
-                            background: 'linear-gradient(135deg, var(--reddit-blue), #007bff)',
-                            boxShadow: '0 4px 15px rgba(0, 123, 255, 0.3)'
+                            background: '#0079D3',
+                            border: '3px solid #272729'
                           }}
                         >
                           <FaSearch className="text-white" />
                         </div>
-                        <div className="fw-bold fs-3" style={{ color: 'var(--reddit-blue)' }}>
+                        <div className="fw-bold fs-3" style={{ color: '#0079D3' }}>
                           {topics.reduce((acc, topic) => acc + topic.keywords.length, 0)}
                         </div>
-                        <div className="reddit-text-secondary small text-uppercase fw-medium">
+                        <div className="small text-uppercase fw-medium" style={{color: '#818384'}}>
                           Keywords Analyzed
                         </div>
                       </div>
@@ -425,16 +468,16 @@ const TopicSelector = () => {
                           style={{
                             width: '60px',
                             height: '60px',
-                            background: 'linear-gradient(135deg, #28a745, #20c997)',
-                            boxShadow: '0 4px 15px rgba(40, 167, 69, 0.3)'
+                            background: '#46D160',
+                            border: '3px solid #272729'
                           }}
                         >
                           <FaRocket className="text-white" />
                         </div>
-                        <div className="fw-bold fs-3" style={{ color: '#28a745' }}>
+                        <div className="fw-bold fs-3" style={{ color: '#46D160' }}>
                           AI-Powered
                         </div>
-                        <div className="reddit-text-secondary small text-uppercase fw-medium">
+                        <div className="small text-uppercase fw-medium" style={{color: '#818384'}}>
                           Analysis
                         </div>
                       </div>

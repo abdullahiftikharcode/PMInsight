@@ -5,10 +5,54 @@ type Variant = 'dashboard' | 'insights' | 'standard' | 'process' | 'generic';
 const SkeletonStyles = () => (
   <style>
     {`
-      @keyframes skeleton-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-      .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.06) 63%); background-size: 400% 100%; animation: skeleton-shimmer 1.6s ease-in-out infinite; border-radius: 8px; }
-      .skeleton-pill { border-radius: 999px; }
-      .skeleton-card { border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(6px); border-radius: 12px; }
+      @keyframes skeleton-shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      
+      @keyframes gradient-shift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      
+      .bg-animated {
+        background: linear-gradient(135deg, #0B1416 0%, #030303 50%, #0B1416 100%);
+        background-size: 200% 200%;
+        animation: gradient-shift 20s ease infinite;
+        min-height: 100vh;
+      }
+      
+      .skeleton {
+        background: linear-gradient(
+          90deg,
+          rgba(39, 43, 48, 0.6) 0%,
+          rgba(255, 69, 0, 0.15) 25%,
+          rgba(255, 86, 0, 0.2) 50%,
+          rgba(255, 69, 0, 0.15) 75%,
+          rgba(39, 43, 48, 0.6) 100%
+        );
+        background-size: 400% 100%;
+        animation: skeleton-shimmer 1.6s ease-in-out infinite;
+        border-radius: 8px;
+      }
+      
+      .skeleton-pill {
+        border-radius: 999px;
+      }
+      
+      .skeleton-card {
+        background: #1A1A1B;
+        border: 1px solid #343536;
+        backdrop-filter: blur(6px);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        transition: border-color 0.2s ease;
+      }
+      
+      .skeleton-card:hover {
+        border-color: #FF4500;
+      }
     `}
   </style>
 );
@@ -155,5 +199,3 @@ export const LoadingSkeleton: React.FC<{ variant?: Variant }> = ({ variant = 'ge
 };
 
 export default LoadingSkeleton;
-
-
