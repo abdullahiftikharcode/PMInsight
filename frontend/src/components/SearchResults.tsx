@@ -60,9 +60,10 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
           : await apiService.searchAll(query);
         
         // Flatten the grouped results into individual sections
+        const isSemanticResponse = (searchResults as any)?.searchType === 'semantic';
         const flattenedSections = searchResults.results.flatMap((group: any) => 
           group.sections.map((section: any) => {
-            const isSemantic = searchResults.searchType === 'semantic' || useSemantic;
+            const isSemantic = isSemanticResponse || useSemantic;
             let similarity = 0;
             if (isSemantic) {
               similarity = typeof section.similarity === 'number' ? section.similarity : 0;
