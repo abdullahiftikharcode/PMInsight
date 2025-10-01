@@ -110,11 +110,20 @@ npm install
 ### 2. Database Configuration
 
 1. Create a PostgreSQL database for the application
-2. Update the `DATABASE_URL` in `backend/.env`:
+2. **Enable pgvector extension** (required for semantic search):
+   ```sql
+   -- Run this on your PostgreSQL database
+   CREATE EXTENSION IF NOT EXISTS vector;
+   ```
+   Or run the provided migration file:
+   ```bash
+   psql $DATABASE_URL -f backend/migrations/enable_pgvector.sql
+   ```
+3. Update the `DATABASE_URL` in `backend/.env`:
 
 ```env
 DATABASE_URL="postgresql://username:password@localhost:5432/pm_standards_db?schema=public"
-# Optional: enable AI features for insights and summaries
+# Required for AI features and semantic search
 GEMINI_API_KEY="your_google_generative_ai_key"
 ```
 
@@ -156,7 +165,23 @@ npm run upload:prince2
 npm run upload:standard-pm
 ```
 
-### 5. Start the Application
+### 5. Generate Embeddings for Semantic Search (Optional but Recommended)
+
+To enable semantic search capabilities, generate embeddings for all sections:
+
+```bash
+cd backend
+
+# Generate embeddings for all sections (requires GEMINI_API_KEY)
+npm run embeddings:compute
+
+# Reset embeddings if needed
+npm run embeddings:reset
+```
+
+**Note**: This process may take several minutes depending on the number of sections. The script includes rate limiting and retry logic to handle API limits gracefully.
+
+### 6. Start the Application
 
 ```bash
 # Terminal 1: Start the backend server
@@ -184,7 +209,8 @@ The application will be available at:
 - `GET /api/sections/:id/adjacent` - Get previous/next sections for navigation
 
 ### Search & Discovery
-- `GET /api/search` - Global search across all standards with filtering
+- `GET /api/search` - Global search across all standards with filtering (keyword-based)
+- `GET /api/search/semantic` - Semantic search using vector embeddings (requires embeddings)
 - `GET /api/compare` - Compare sections across standards by topic
 - `GET /api/insights` - Get comprehensive statistics about standards coverage
  - `GET /api/graph` - Topic → Section → Standard graph data for visualization
@@ -261,6 +287,8 @@ npm run upload:iso21500       # Upload ISO 21500 data
 npm run upload:iso21502       # Upload ISO 21502 data
 npm run upload:prince2        # Upload PRINCE2 data
 npm run upload:standard-pm    # Upload Standard for Project Management data
+npm run embeddings:compute    # Generate embeddings for semantic search
+npm run embeddings:reset      # Reset all embeddings
 ```
 
 ### Frontend

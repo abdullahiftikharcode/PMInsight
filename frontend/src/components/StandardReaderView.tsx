@@ -42,6 +42,10 @@ const StandardReaderView = () => {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [bookmarkedSections, setBookmarkedSections] = useState<any[]>([]);
   const [bookmarksLoading, setBookmarksLoading] = useState(false);
+  const [useSemanticStd, setUseSemanticStd] = useState(() => {
+    const stored = localStorage.getItem('useSemanticStd');
+    return stored ? stored === 'true' : true; // default ON
+  });
 
   useEffect(() => {
     const fetchStandard = async () => {
@@ -73,9 +77,17 @@ const StandardReaderView = () => {
 
     try {
       setSearchLoading(true);
-      const response = await apiService.searchStandard(parseInt(id), searchQuery);
-      console.log('Search response:', response);
-      // The backend returns { query, results, totalFound, standard }
+      let response: any;
+      if (useSemanticStd) {
+        try {
+          response = await apiService.searchStandardSemantic(parseInt(id), searchQuery, 20);
+        } catch (semanticErr) {
+          console.warn('Semantic search failed, falling back to keyword search:', semanticErr);
+        }
+      }
+      if (!response || !Array.isArray(response.results)) {
+        response = await apiService.searchStandard(parseInt(id), searchQuery);
+      }
       setSearchResults(response.results || []);
       setShowSearchResults(true);
     } catch (err) {
@@ -255,6 +267,18 @@ const StandardReaderView = () => {
                   <FaTimes className="text-muted" />
                 </button>
               )}
+            </div>
+            <div className="form-check form-switch mt-2">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="semanticStdToggle"
+                checked={useSemanticStd}
+                onChange={(e) => { const v = e.target.checked; setUseSemanticStd(v); localStorage.setItem('useSemanticStd', String(v)); }}
+              />
+              <label className="form-check-label small" htmlFor="semanticStdToggle">
+                Semantic search
+              </label>
             </div>
             {searchLoading && (
               <div className="text-center mt-2">

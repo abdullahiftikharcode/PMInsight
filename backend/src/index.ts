@@ -12,6 +12,7 @@ const prisma = new PrismaClient();
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+const embedModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
 
 // Middleware
 app.use(cors());
@@ -55,7 +56,110 @@ app.get('/api/standards', async (req, res) => {
   }
 });
 
-// 1.1 GET /api/search - Advanced search across all standards
+// 1.1 GET /api/search/semantic - Vector similarity search across all standards
+app.get('/api/search/semantic', async (req, res) => {
+  try {
+    const { q, limit = '20' } = req.query;
+    
+    if (!q || typeof q !== 'string') {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'Vector search requires GEMINI_API_KEY' });
+    }
+
+    const searchLimit = Math.max(1, parseInt(limit as string));
+    const searchQuery = q.trim();
+
+    console.log(`🔍 Vector search for: "${searchQuery}"`);
+
+    // Generate embedding for the search query
+    const queryEmbedding = await embedModel.embedContent(searchQuery);
+    const queryVector = queryEmbedding.embedding.values;
+
+    // Vector similarity search using cosine distance
+    // Smaller distance = more similar, so we order by distance ASC
+    const vectorResults = await prisma.$queryRawUnsafe(`
+      SELECT 
+        s.id,
+        s."sectionNumber",
+        s.title,
+        s."fullTitle",
+        s.content,
+        s."anchorId",
+        s."wordCount",
+        s."sentenceCount",
+        (1 - (s.embedding <=> $1::vector)) AS similarity,
+        std.id as "standardId",
+        std.title as "standardTitle",
+        std.type as "standardType",
+        std.version as "standardVersion",
+        ch.id as "chapterId",
+        ch.title as "chapterTitle",
+        ch.number as "chapterNumber"
+      FROM "Section" s
+      LEFT JOIN "Standard" std ON s."standardId" = std.id
+      LEFT JOIN "Chapter" ch ON s."chapterId" = ch.id
+      WHERE s.embedding IS NOT NULL
+      ORDER BY s.embedding <=> $1::vector ASC
+      LIMIT $2
+    `, queryVector, searchLimit);
+
+    // Group results by standard for consistency with existing API
+    const groupedResults = (vectorResults as any[]).reduce((acc: Record<number, any>, section: any) => {
+      const standardId = section.standardId;
+      if (!acc[standardId]) {
+        acc[standardId] = {
+          standard: {
+            id: section.standardId,
+            title: section.standardTitle,
+            type: section.standardType,
+            version: section.standardVersion
+          },
+          sections: []
+        };
+      }
+      acc[standardId].sections.push({
+        id: section.id,
+        sectionNumber: section.sectionNumber,
+        title: section.title,
+        fullTitle: section.fullTitle,
+        content: section.content,
+        anchorId: section.anchorId,
+        wordCount: section.wordCount,
+        sentenceCount: section.sentenceCount,
+        similarity: parseFloat(section.similarity),
+        chapter: section.chapterId ? {
+          id: section.chapterId,
+          title: section.chapterTitle,
+          number: section.chapterNumber
+        } : null
+      });
+      return acc;
+    }, {} as Record<number, any>);
+
+    const results = Object.values(groupedResults);
+
+    res.json({
+      query: searchQuery,
+      totalResults: (vectorResults as any[]).length,
+      results: results,
+      searchType: 'semantic',
+      searchMetadata: {
+        searchedStandards: [...new Set((vectorResults as any[]).map((s: any) => s.standardId))],
+        totalSections: (vectorResults as any[]).length,
+        averageSimilarity: (vectorResults as any[]).length > 0 ? 
+          (vectorResults as any[]).reduce((sum: number, s: any) => sum + parseFloat(s.similarity), 0) / (vectorResults as any[]).length : 0
+      }
+    });
+  } catch (error) {
+    console.error('Error performing vector search:', error);
+    res.status(500).json({ error: 'Vector search failed' });
+  }
+});
+
+// 1.2 GET /api/search - Advanced search across all standards (keyword-based)
 app.get('/api/search', async (req, res) => {
   try {
     const { q, standardId, type, limit = '20' } = req.query;
@@ -377,6 +481,60 @@ app.post('/api/standards/:id/search', async (req, res) => {
   }
 });
 
+// 3.a POST /api/standards/:id/search/semantic - Vector search within a standard
+app.post('/api/standards/:id/search/semantic', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { query, limit = 10 } = req.body || {};
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Query is required' });
+    }
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'Semantic search requires GEMINI_API_KEY' });
+    }
+
+    const stdId = parseInt(id);
+    const lim = Math.max(1, parseInt(String(limit)) || 10);
+
+    // Build embedding for the query
+    const qEmb = await embedModel.embedContent(query.trim());
+    const qVec = qEmb.embedding.values;
+
+    const rows = await prisma.$queryRawUnsafe(`
+      SELECT 
+        s.id,
+        s."sectionNumber",
+        s.title,
+        s."fullTitle",
+        s.content,
+        s."anchorId",
+        s."wordCount",
+        s."sentenceCount",
+        (1 - (s.embedding <=> $1::vector)) AS similarity,
+        ch.id as "chapterId",
+        ch.title as "chapterTitle",
+        ch.number as "chapterNumber"
+      FROM "Section" s
+      LEFT JOIN "Chapter" ch ON s."chapterId" = ch.id
+      WHERE s."standardId" = $2 AND s.embedding IS NOT NULL
+      ORDER BY s.embedding <=> $1::vector ASC
+      LIMIT $3
+    `, qVec, stdId, lim);
+
+    res.json({
+      query,
+      results: rows,
+      totalFound: (rows as any[]).length,
+      standardId: stdId,
+      searchType: 'semantic'
+    });
+  } catch (error) {
+    console.error('Error performing per-standard semantic search:', error);
+    res.status(500).json({ error: 'Failed to perform semantic search' });
+  }
+});
+
 // 4. GET /api/sections/:id - Get individual section details
 app.get('/api/sections/:id', async (req, res) => {
   try {
@@ -440,49 +598,77 @@ app.get('/api/compare', async (req, res) => {
       (standardIds as string).split(',').map(id => parseInt(id)) : 
       [];
 
-    // Find relevant sections across all or specified standards
-    const sections = await prisma.section.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { title: { contains: topicQuery, mode: 'insensitive' } },
-              { content: { contains: topicQuery, mode: 'insensitive' } },
-              { fullTitle: { contains: topicQuery, mode: 'insensitive' } }
-            ]
-          },
-          standardIdsArray.length > 0 ? { standardId: { in: standardIdsArray } } : {}
-        ]
-      },
-      select: {
-        id: true,
-        sectionNumber: true,
-        title: true,
-        fullTitle: true,
-        content: true,
-        wordCount: true,
-        anchorId: true,
-        standard: {
-          select: {
-            id: true,
-            title: true,
-            type: true,
-            version: true
-          }
+    let sections: any[] = [];
+    if (process.env.GEMINI_API_KEY) {
+      // Semantic: top 5 per standard by cosine similarity
+      const emb = await embedModel.embedContent(topicQuery);
+      const vec = emb.embedding.values;
+      const rows = await prisma.$queryRawUnsafe(`
+        WITH ranked AS (
+          SELECT 
+            s.id,
+            s."sectionNumber",
+            s.title,
+            s."fullTitle",
+            s.content,
+            s."wordCount",
+            s."anchorId",
+            s."standardId",
+            (1 - (s.embedding <=> $1::vector)) AS similarity,
+            ROW_NUMBER() OVER (PARTITION BY s."standardId" ORDER BY s.embedding <=> $1::vector ASC) AS rn
+          FROM "Section" s
+          WHERE s.embedding IS NOT NULL
+          ${standardIdsArray.length > 0 ? 'AND s."standardId" = ANY($2)' : ''}
+        )
+        SELECT r.*, std.title as "standardTitle", std.type as "standardType", std.version as "standardVersion",
+               ch.id as "chapterId", ch.title as "chapterTitle", ch.number as "chapterNumber"
+        FROM ranked r
+        LEFT JOIN "Standard" std ON r."standardId" = std.id
+        LEFT JOIN "Section" s2 ON s2.id = r.id
+        LEFT JOIN "Chapter" ch ON s2."chapterId" = ch.id
+        WHERE r.rn <= 5
+      `, ...(standardIdsArray.length > 0 ? [vec, standardIdsArray] as any : [vec] as any));
+      sections = (rows as any[]).map(r => ({
+        id: r.id,
+        sectionNumber: r.sectionNumber,
+        title: r.title,
+        fullTitle: r.fullTitle,
+        content: r.content,
+        wordCount: r.wordCount,
+        anchorId: r.anchorId,
+        similarity: parseFloat(r.similarity),
+        standard: { id: r.standardId, title: r.standardTitle, type: r.standardType, version: r.standardVersion },
+        chapter: r.chapterId ? { id: r.chapterId, title: r.chapterTitle, number: r.chapterNumber } : null
+      }));
+    } else {
+      // Fallback keyword search
+      sections = await prisma.section.findMany({
+        where: {
+          AND: [
+            {
+              OR: [
+                { title: { contains: topicQuery, mode: 'insensitive' } },
+                { content: { contains: topicQuery, mode: 'insensitive' } },
+                { fullTitle: { contains: topicQuery, mode: 'insensitive' } }
+              ]
+            },
+            standardIdsArray.length > 0 ? { standardId: { in: standardIdsArray } } : {}
+          ]
         },
-        chapter: {
-          select: {
-            id: true,
-            title: true,
-            number: true
-          }
-        }
-      },
-      orderBy: [
-        { wordCount: 'desc' },
-        { standard: { title: 'asc' } }
-      ]
-    });
+        select: {
+          id: true,
+          sectionNumber: true,
+          title: true,
+          fullTitle: true,
+          content: true,
+          wordCount: true,
+          anchorId: true,
+          standard: { select: { id: true, title: true, type: true, version: true } },
+          chapter: { select: { id: true, title: true, number: true } }
+        },
+        orderBy: [ { wordCount: 'desc' }, { standard: { title: 'asc' } } ]
+      });
+    }
 
     // Group by standard
     const groupedSections = sections.reduce((acc: Record<number, any>, section: any) => {
@@ -798,11 +984,38 @@ app.post('/api/process/generate', async (req, res) => {
       return score;
     }
 
-    const topSections = allSections
-      .map((s: any): any => ({ ...s, _score: scoreSection(s) }))
-      .filter((s: any) => s._score > 0)
-      .sort((a: any, b: any) => b._score - a._score)
-      .slice(0, 30);
+    let topSections: any[] = [];
+    if (process.env.GEMINI_API_KEY) {
+      const seedText = Array.from(topicKeywords).join(' ');
+      const qEmb = await embedModel.embedContent(`${lifecycle} ${scenarioId} ${driverText} ${constraintText} ${seedText}`);
+      const qVec = qEmb.embedding.values;
+      const rows = await prisma.$queryRawUnsafe(`
+        SELECT s.id, s.title, s.content, s."sectionNumber", s."anchorId", s."standardId",
+               (1 - (s.embedding <=> $1::vector)) AS similarity,
+               std.title as "standardTitle"
+        FROM "Section" s
+        LEFT JOIN "Standard" std ON s."standardId" = std.id
+        WHERE s.embedding IS NOT NULL
+        ORDER BY s.embedding <=> $1::vector ASC
+        LIMIT 60
+      `, qVec);
+      topSections = (rows as any[]).map(r => ({
+        id: r.id,
+        title: r.title,
+        content: r.content,
+        sectionNumber: r.sectionNumber,
+        anchorId: r.anchorId,
+        standardId: r.standardId,
+        _score: parseFloat(r.similarity),
+        standard: { title: r.standardTitle }
+      }));
+    } else {
+      topSections = allSections
+        .map((s: any): any => ({ ...s, _score: scoreSection(s) }))
+        .filter((s: any) => s._score > 0)
+        .sort((a: any, b: any) => b._score - a._score)
+        .slice(0, 30);
+    }
 
     // Optional Gemini synthesis for tailored steps
     let aiStepsByPhase: Record<string, string[]> | null = null;

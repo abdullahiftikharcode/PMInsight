@@ -27,6 +27,10 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
+  const [useSemantic, setUseSemantic] = useState(() => {
+    const stored = localStorage.getItem('useSemantic');
+    return stored ? stored === 'true' : true; // default ON
+  });
 
   const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const highlightHTML = (text: string, q: string) => {
@@ -51,58 +55,45 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
     const performSearch = async () => {
       try {
         setLoading(true);
-        const searchResults = await apiService.searchAll(query);
+        const searchResults = useSemantic
+          ? await apiService.semanticSearch(query)
+          : await apiService.searchAll(query);
         
         // Flatten the grouped results into individual sections
         const flattenedSections = searchResults.results.flatMap((group: any) => 
           group.sections.map((section: any) => {
-            // Calculate improved similarity score based on text matching
-            const queryLower = query.toLowerCase();
-            const titleLower = section.title?.toLowerCase() || '';
-            const contentLower = section.content?.toLowerCase() || '';
-            const fullTitleLower = section.fullTitle?.toLowerCase() || '';
-            
-            // Calculate match scores with better logic
-            let titleMatch = 0;
-            let contentMatch = 0;
-            let fullTitleMatch = 0;
-            
-            // Title match - higher score for exact matches
-            if (titleLower.includes(queryLower)) {
-              if (titleLower === queryLower) {
-                titleMatch = 0.95; // Exact title match
-              } else if (titleLower.startsWith(queryLower)) {
-                titleMatch = 0.9; // Title starts with query
-              } else {
-                titleMatch = 0.8; // Title contains query
+            const isSemantic = searchResults.searchType === 'semantic' || useSemantic;
+            let similarity = 0;
+            if (isSemantic) {
+              similarity = typeof section.similarity === 'number' ? section.similarity : 0;
+            } else {
+              // Calculate improved similarity score based on text matching
+              const queryLower = query.toLowerCase();
+              const titleLower = section.title?.toLowerCase() || '';
+              const contentLower = section.content?.toLowerCase() || '';
+              const fullTitleLower = section.fullTitle?.toLowerCase() || '';
+              
+              let titleMatch = 0;
+              let contentMatch = 0;
+              let fullTitleMatch = 0;
+              
+              if (titleLower.includes(queryLower)) {
+                if (titleLower === queryLower) {
+                  titleMatch = 0.95;
+                } else if (titleLower.startsWith(queryLower)) {
+                  titleMatch = 0.9;
+                } else {
+                  titleMatch = 0.8;
+                }
               }
-            }
-            
-            // Full title match
-            if (fullTitleLower.includes(queryLower)) {
-              if (fullTitleLower === queryLower) {
-                fullTitleMatch = 0.9; // Exact full title match
-              } else {
-                fullTitleMatch = 0.75; // Full title contains query
+              if (fullTitleLower.includes(queryLower)) {
+                fullTitleMatch = fullTitleLower === queryLower ? 0.9 : 0.75;
               }
-            }
-            
-            // Content match - check for multiple occurrences
-            if (contentLower.includes(queryLower)) {
-              const occurrences = (contentLower.match(new RegExp(queryLower, 'g')) || []).length;
-              contentMatch = Math.min(0.7 + (occurrences * 0.05), 0.85); // Higher score for multiple matches
-            }
-            
-            // Use the highest match score
-            const similarity = Math.max(titleMatch, contentMatch, fullTitleMatch);
-            
-            // Debug logging for similarity scores
-            if (similarity > 0) {
-              console.log(`Section: ${section.title}, Similarity: ${(similarity * 100).toFixed(1)}%`, {
-                titleMatch: (titleMatch * 100).toFixed(1),
-                contentMatch: (contentMatch * 100).toFixed(1),
-                fullTitleMatch: (fullTitleMatch * 100).toFixed(1)
-              });
+              if (contentLower.includes(queryLower)) {
+                const occurrences = (contentLower.match(new RegExp(queryLower, 'g')) || []).length;
+                contentMatch = Math.min(0.7 + (occurrences * 0.05), 0.85);
+              }
+              similarity = Math.max(titleMatch, contentMatch, fullTitleMatch);
             }
             
             return {
@@ -139,7 +130,7 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
     if (query.trim()) {
       performSearch();
     }
-  }, [query]);
+  }, [query, useSemantic]);
 
   if (loading) {
     return (
@@ -279,6 +270,18 @@ const SearchResults = ({ query, onBack }: SearchResultsProps) => {
               </div>
             </div>
             <div className="reddit-nav-links">
+              <div className="form-check form-switch me-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="semanticToggle"
+                  checked={useSemantic}
+                  onChange={(e) => { const v = e.target.checked; setUseSemantic(v); localStorage.setItem('useSemantic', String(v)); }}
+                />
+                <label className="form-check-label" htmlFor="semanticToggle">
+                  Semantic
+                </label>
+              </div>
               <Link to="/" className="reddit-nav-link">
                 <FaHome className="me-1" />
                 Home

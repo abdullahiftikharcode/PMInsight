@@ -10,11 +10,11 @@ datasource db {
 model Standard {
   id          Int       @id @default(autoincrement())
   title       String    @unique
-  type        String    // "PMBOK", "PRINCE2", "ISO", etc.
-  version     String?   // "7th Edition", "2021", etc.
+  type        String
+  version     String?
   description String?
-  sections    Section[]
   chapters    Chapter[]
+  sections    Section[]
 
   @@index([type])
 }
@@ -22,32 +22,34 @@ model Standard {
 model Chapter {
   id          Int       @id @default(autoincrement())
   standardId  Int
-  number      String    // "1", "2", "3", etc.
-  title       String    // "INTRODUCTION", "PROJECT PERFORMANCE DOMAINS", etc.
+  number      String
+  title       String
   description String?
-  sections    Section[]
   standard    Standard  @relation(fields: [standardId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sections    Section[]
 
-  @@index([standardId])
   @@unique([standardId, number])
+  @@index([standardId])
 }
 
 model Section {
-  id            Int      @id @default(autoincrement())
+  id            Int                    @id @default(autoincrement())
   standardId    Int
   chapterId     Int?
-  sectionNumber String   // "1.1", "2.3.4", etc.
-  title         String   // "Structure of the PMBOK® Guide"
-  fullTitle     String   // "1.1 Structure of the PMBOK® Guide"
+  sectionNumber String
+  title         String
+  fullTitle     String
   content       String
-  anchorId      String   @unique
-  wordCount     Int      @default(0)
-  sentenceCount Int      @default(0)
-  standard      Standard @relation(fields: [standardId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  chapter       Chapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  anchorId      String                 @unique
+  wordCount     Int                    @default(0)
+  sentenceCount Int                    @default(0)
+  embedding     Unsupported("vector")?
+  chapter       Chapter?               @relation(fields: [chapterId], references: [id], onUpdate: NoAction)
+  standard      Standard               @relation(fields: [standardId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  @@unique([standardId, sectionNumber])
   @@index([standardId])
   @@index([chapterId])
   @@index([sectionNumber])
-  @@unique([standardId, sectionNumber])
+  @@index([embedding], map: "section_embedding_idx")
 }

@@ -15,7 +15,9 @@
     "upload:iso21500": "ts-node src/scripts/upload-iso21500.ts",
     "upload:iso21502": "ts-node src/scripts/upload-iso21502.ts",
     "upload:prince2": "ts-node src/scripts/uploadPRINCE2Sections.ts",
-    "upload:standard-pm": "ts-node src/scripts/upload-standard-pm.ts"
+    "upload:standard-pm": "ts-node src/scripts/upload-standard-pm.ts",
+    "embeddings:compute": "ts-node src/scripts/compute-embeddings.ts",
+    "embeddings:reset": "ts-node -e \"import { PrismaClient } from '@prisma/client'; const p = new PrismaClient(); p.$executeRawUnsafe('UPDATE \\\"Section\\\" SET embedding = NULL'); p.$disconnect();\""
   },
   "keywords": [],
   "author": "",

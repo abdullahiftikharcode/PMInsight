@@ -139,6 +139,12 @@ export const apiService = {
     return response.data;
   },
 
+  // Semantic search within a standard
+  searchStandardSemantic: async (standardId: number, query: string, limit: number = 10): Promise<{ query: string; results: any[]; totalFound: number; standardId: number; searchType: string }> => {
+    const response = await api.post(`/standards/${standardId}/search/semantic`, { query, limit });
+    return response.data;
+  },
+
 
   // Global search across all standards
   searchAll: async (query: string, standardId?: number, type?: string, limit: number = 20): Promise<{ query: string; totalResults: number; results: any[]; searchMetadata: any }> => {
@@ -147,6 +153,13 @@ export const apiService = {
     if (type) params.append('type', type);
     
     const response = await api.get(`/search?${params.toString()}`);
+    return response.data;
+  },
+
+  // Semantic search using vector embeddings
+  semanticSearch: async (query: string, limit: number = 20): Promise<{ query: string; totalResults: number; results: any[]; searchType: string; searchMetadata: any }> => {
+    const params = new URLSearchParams({ q: query, limit: limit.toString() });
+    const response = await api.get(`/search/semantic?${params.toString()}`);
     return response.data;
   },
 
