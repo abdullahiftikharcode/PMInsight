@@ -6,7 +6,7 @@ This document explains the key architectural and product decisions for PMInsight
 - Explore PMBOK 7, PRINCE2, and ISO 21500/21502 in a searchable, navigable way
 - Compare standards for selected topics with deep links to exact sections
 - Generate tailored project processes with evidence-based citations
-- Visualize relationships using an innovative Topic Map graph
+- Visualize relationships using an innovative Topic Map graph .
 
 2) System Overview
 - Frontend: React + TypeScript + Vite (SPA) deployed on Vercel
