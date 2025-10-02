@@ -3,10 +3,10 @@ PMInsight – Design Decisions and Justification
 This document explains the key architectural and product decisions for PMInsight and the reasoning behind them, covering alternatives, trade-offs, and future improvements. It is intended to satisfy the “Clarity & Justification” criterion of the assignment.
 
 1) Purpose and Scope
-- Explore PMBOK 7, PRINCE2, and ISO 21500/21502 in a searchable, navigable way
+- Explore PMBOK 7, PRINCE2, and ISO 21500/21502 in a searchable, navigabtable way
 - Compare standards for selected topics with deep links to exact sections
 - Generate tailored project processes with evidence-based citations
-- Visualize relationships using an innovative Topic Map graph .
+- Visualize relationships using an innovative Topic Map graph...
 
 2) System Overview
 - Frontend: React + TypeScript + Vite (SPA) deployed on Vercel
