@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { apiService, type ComparisonTopic } from '../services/api';
 import { 
   FaSearch, 
@@ -16,10 +16,11 @@ import {
 import LoadingSkeleton from './LoadingSkeleton';
 
 const TopicSelector = () => {
+  const navigate = useNavigate();
   const [topics, setTopics] = useState<ComparisonTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [customTopic, setCustomTopic] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
 
@@ -45,11 +46,31 @@ const TopicSelector = () => {
     fetchTopics();
   }, []);
 
-  const filteredTopics = topics.filter(topic =>
-    topic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    topic.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    topic.keywords.some(keyword => keyword.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const handleCustomComparison = async () => {
+    console.log('=== TopicSelector: handleCustomComparison ===');
+    console.log('customTopic:', customTopic);
+    
+    if (!customTopic.trim()) {
+      console.log('❌ No custom topic provided');
+      return;
+    }
+    
+    try {
+      const encodedTopic = encodeURIComponent(customTopic.trim());
+      const url = `/comparison/custom?topic=${encodedTopic}`;
+      console.log('🔗 Navigating to:', url);
+      // Navigate to comparison page with custom topic
+      navigate(url);
+    } catch (error) {
+      console.error('❌ Error navigating to custom comparison:', error);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCustomComparison();
+    }
+  };
 
   const toggleSidebar = () => {
     const newCollapsed = !isCollapsed;
@@ -169,7 +190,7 @@ const TopicSelector = () => {
         </header>
 
         <div className="container py-5">
-          {/* Search Bar */}
+          {/* Custom Topic Input */}
           <div className="row mb-5">
             <div className="col-12">
               <div 
@@ -199,11 +220,12 @@ const TopicSelector = () => {
                   <input
                     type="text"
                     className="form-control border-0 bg-transparent search-input"
-                    placeholder="Search comparison topics..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Enter a topic to compare across standards (e.g., 'Risk Management', 'Stakeholder Engagement')..."
+                    value={customTopic}
+                    onChange={(e) => setCustomTopic(e.target.value)}
                     onFocus={() => setSearchFocused(true)}
                     onBlur={() => setSearchFocused(false)}
+                    onKeyPress={handleKeyPress}
                     style={{
                       fontSize: '1rem',
                       color: '#D7DADC',
@@ -213,10 +235,10 @@ const TopicSelector = () => {
                       outline: 'none'
                     }}
                   />
-                  {searchQuery && (
+                  {customTopic && (
                     <button 
                       className="btn border-0 rounded-circle"
-                      onClick={() => setSearchQuery('')}
+                      onClick={() => setCustomTopic('')}
                       style={{
                         color: '#818384',
                         width: '40px',
@@ -236,7 +258,7 @@ const TopicSelector = () => {
                         e.currentTarget.style.background = '#272729';
                         e.currentTarget.style.color = '#818384';
                       }}
-                      title="Clear search"
+                      title="Clear input"
                     >
                       ✕
                     </button>
@@ -248,8 +270,8 @@ const TopicSelector = () => {
 
           {/* Topics Grid */}
           <div className="row g-4">
-            {filteredTopics.length > 0 ? (
-              filteredTopics.map((topic, index) => (
+            {topics.length > 0 ? (
+              topics.map((topic, index) => (
               <div key={topic.id} className="col-md-6 col-lg-4">
                 <Link 
                   to={`/comparison/${topic.id}`} 
@@ -373,34 +395,10 @@ const TopicSelector = () => {
                   <div className="reddit-card" style={{borderRadius: '12px', background: '#1A1A1B', border: '1px solid #343536'}}>
                     <div className="reddit-card-body p-5">
                       <FaSearch className="display-4 mb-3" style={{color: '#818384'}} />
-                      <h4 className="mb-3" style={{color: '#D7DADC'}}>No topics found</h4>
+                      <h4 className="mb-3" style={{color: '#D7DADC'}}>No topics available</h4>
                       <p className="mb-4" style={{color: '#818384'}}>
-                        {searchQuery ? 'Try different keywords or check your spelling.' : 'No comparison topics available.'}
+                        No comparison topics available.
                       </p>
-                      {searchQuery && (
-                        <button 
-                          className="btn"
-                          onClick={() => setSearchQuery('')}
-                          style={{
-                            background: '#272729',
-                            color: '#D7DADC',
-                            border: '1px solid #343536',
-                            borderRadius: '20px',
-                            padding: '0.5rem 1.5rem',
-                            fontWeight: 500
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#343536';
-                            e.currentTarget.style.borderColor = '#FF4500';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = '#272729';
-                            e.currentTarget.style.borderColor = '#343536';
-                          }}
-                        >
-                          Clear Search
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>

@@ -29,6 +29,7 @@ function App() {
           <Route path="/comparison" element={<TopicSelector />} />
           <Route path="/map" element={<TopicMap />} />
           <Route path="/process-generator" element={<ProcessGenerator />} />
+          <Route path="/comparison/custom" element={<ComparisonView />} />
           <Route path="/comparison/:topicId" element={<ComparisonView />} />
           <Route path="/search" element={<SearchResults query="" onBack={() => window.history.back()} />} />
           <Route path="*" element={<NotFound />} />

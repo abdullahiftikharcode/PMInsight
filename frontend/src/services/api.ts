@@ -61,16 +61,18 @@ export interface ComparisonResponse {
     standards: Array<{
       standardTitle: string;
       summary: string;
-    relevantSections: Array<{
-      sectionTitle: string;
-      sectionId: number;
-      anchorId: string;
-      sectionNumber: string;
-      relevanceScore: number;
-    }>;
+      aiSummary?: string;
+      relevantSections: Array<{
+        sectionTitle: string;
+        sectionId: number;
+        anchorId: string;
+        sectionNumber: string;
+        relevanceScore: number;
+      }>;
     }>;
     keySimilarities: string[];
     keyDifferences: string[];
+    uniqueInsights?: string[];
   };
   generatedAt: string;
 }
@@ -197,6 +199,15 @@ export const apiService = {
   // Get comparison for specific topic
   getComparison: async (topicId: number): Promise<ComparisonResponse> => {
     const response = await api.get(`/comparison/topics/${topicId}`);
+    return response.data;
+  },
+
+  // Get comparison for a custom topic
+  getComparisonByTopic: async (topic: string): Promise<ComparisonResponse> => {
+    console.log('🔍 API: getComparisonByTopic called with topic:', topic);
+    console.log('📡 Making POST request to /api/compare with body:', { topic });
+    const response = await api.post('/compare', { topic });
+    console.log('✅ API: getComparisonByTopic response received:', response.data);
     return response.data;
   },
 

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { apiService, type ComparisonResponse } from '../services/api';
 import { 
   FaBook, 
@@ -17,10 +17,18 @@ import {
 
 const ComparisonView = () => {
   const { topicId } = useParams<{ topicId: string }>();
+  const location = useLocation();
   const [comparison, setComparison] = useState<ComparisonResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
+  
+  // Check if this is a custom topic comparison
+  const isCustomTopic = useMemo(() => location.pathname === '/comparison/custom', [location.pathname]);
+  const customTopic = useMemo(() => 
+    isCustomTopic ? new URLSearchParams(location.search).get('topic') : null, 
+    [isCustomTopic, location.search]
+  );
 
   const toggleSidebar = () => {
     const newCollapsed = !isCollapsed;
@@ -30,22 +38,57 @@ const ComparisonView = () => {
 
   useEffect(() => {
     const fetchComparison = async () => {
-      if (!topicId) return;
+      console.log('=== ComparisonView useEffect ===');
+      console.log('topicId:', topicId);
+      console.log('isCustomTopic:', isCustomTopic);
+      console.log('customTopic:', customTopic);
+      
+      // Handle custom topic case
+      if (isCustomTopic) {
+        if (!customTopic) {
+          console.log('❌ Custom topic but no topic parameter in URL');
+          setError('No topic specified for custom comparison.');
+          return;
+        }
+        
+        try {
+          setLoading(true);
+          console.log('🔍 Using custom topic comparison with:', customTopic);
+          const data = await apiService.getComparisonByTopic(customTopic);
+          console.log('✅ Custom topic comparison successful:', data);
+          setComparison(data);
+        } catch (err) {
+          console.error('❌ Error fetching custom comparison:', err);
+          setError('Failed to load comparison. Please make sure insights have been generated.');
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+      
+      // Handle predefined topic case
+      if (!topicId || isNaN(parseInt(topicId))) {
+        console.log('❌ No valid topicId for predefined topic');
+        setError('Invalid topic ID.');
+        return;
+      }
       
       try {
         setLoading(true);
+        console.log('🔍 Using predefined topic comparison with ID:', topicId);
         const data = await apiService.getComparison(parseInt(topicId));
+        console.log('✅ Predefined topic comparison successful:', data);
         setComparison(data);
       } catch (err) {
+        console.error('❌ Error fetching predefined comparison:', err);
         setError('Failed to load comparison. Please make sure insights have been generated.');
-        console.error('Error fetching comparison:', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchComparison();
-  }, [topicId]);
+  }, [topicId, isCustomTopic, customTopic]);
 
   if (loading) {
     return (
@@ -195,6 +238,9 @@ const ComparisonView = () => {
   const sanitizedDifferences = (comparisonData.keyDifferences || [])
     .map(s => (s ?? '').trim())
     .filter(s => s.length > 0);
+  const sanitizedUniqueInsights = (comparisonData.uniqueInsights || [])
+    .map((s: string) => (s ?? '').trim())
+    .filter((s: string) => s.length > 0);
 
   return (
     <div className="min-vh-100 bg-animated position-relative">
@@ -306,9 +352,29 @@ const ComparisonView = () => {
                         </div>
                       </div>
                       
-                      <p className="reddit-text-secondary mb-4">
+                      <p className="reddit-text-secondary mb-3">
                         {standard.summary}
                       </p>
+                      
+                      {standard.aiSummary && (
+                        <div className="mb-4 p-3 rounded-3" style={{
+                          background: 'linear-gradient(135deg, rgba(255, 69, 0, 0.08), rgba(255, 69, 0, 0.03))',
+                          border: '1px solid rgba(255, 69, 0, 0.15)',
+                          borderLeft: '4px solid #FF4500'
+                        }}>
+                          <div className="d-flex align-items-start">
+                            <div className="me-2 mt-1">
+                              <FaRocket className="text-warning" style={{fontSize: '0.9rem'}} />
+                            </div>
+                            <div>
+                              <h6 className="fw-bold text-warning mb-2" style={{fontSize: '0.9rem'}}>AI Analysis</h6>
+                              <p className="reddit-text-secondary small mb-0" style={{fontSize: '0.85rem', lineHeight: '1.4'}}>
+                                {standard.aiSummary}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {standard.relevantSections.length > 0 && (
                         <div>
@@ -371,7 +437,7 @@ const ComparisonView = () => {
                                       boxShadow: '0 2px 8px rgba(255, 107, 53, 0.3)'
                                     }}
                                   >
-                                    Score: {section.relevanceScore}
+                                    Score: {Math.round(section.relevanceScore * 100)}%
                                   </span>
                                   <Link 
                                     to={`/section/${section.sectionId}`}
@@ -466,17 +532,34 @@ const ComparisonView = () => {
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="mt-5 text-center">
-            <div className="reddit-card">
-              <div className="reddit-card-body">
-                <p className="text-muted small mb-0">
-                  <FaChartBar className="me-2" />
-                  AI-generated analysis • Generated on {new Date(comparison.generatedAt).toLocaleDateString()}
-                </p>
+          {/* Unique Insights */}
+          {sanitizedUniqueInsights.length > 0 && (
+            <div className="row g-4 mt-4">
+              <div className="col-12">
+                <div className="reddit-card content-auto">
+                  <div className="reddit-card-body no-gap">
+                    <div className="d-flex align-items-center mb-4">
+                      <div className="me-3">
+                        <FaRocket className="text-warning" style={{fontSize: '1.5rem'}} />
+                      </div>
+                      <h3 className="h5 fw-bold reddit-text-primary mb-0">Unique Insights</h3>
+                    </div>
+                    <ul className="list-unstyled mb-0">
+                      {sanitizedUniqueInsights.map((insight: string, index: number) => (
+                        <li key={index} className="d-flex align-items-start mb-3">
+                          <div className="me-3 mt-1">
+                            <div className="bg-warning rounded-circle" style={{width: '8px', height: '8px'}}></div>
+                          </div>
+                          <span className="reddit-text-secondary">{insight}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
         </div>
         </div>
       </div>

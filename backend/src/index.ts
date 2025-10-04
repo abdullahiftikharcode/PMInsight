@@ -584,13 +584,282 @@ app.get('/api/sections/:id', async (req, res) => {
 
 
 
-// 5. GET /api/compare - Compare specific sections across standards (without AI analysis)
+// 5. POST /api/compare - Compare custom topics across standards
+app.post('/api/compare', async (req, res) => {
+  console.log('=== POST /api/compare - Custom Topic Comparison ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  
+  try {
+    const { topic } = req.body;
+    
+    if (!topic || typeof topic !== 'string') {
+      console.log('❌ Error: Topic parameter is required');
+      return res.status(400).json({ error: 'Topic parameter is required' });
+    }
+
+    console.log(`🔍 Processing custom topic: "${topic}"`);
+    const topicQuery = topic.toLowerCase();
+    console.log(`📝 Normalized topic query: "${topicQuery}"`);
+
+    let sections: any[] = [];
+    
+    if (process.env.GEMINI_API_KEY) {
+      console.log('🤖 Using semantic search with Gemini embeddings...');
+      try {
+        const emb = await embedModel.embedContent(topicQuery);
+        const vec = emb.embedding.values;
+        console.log(`📊 Generated embedding vector with ${vec.length} dimensions`);
+        
+        const rows = await prisma.$queryRawUnsafe(`
+          WITH ranked AS (
+            SELECT 
+              s.id,
+              s."sectionNumber",
+              s.title,
+              s."fullTitle",
+              s.content,
+              s."wordCount",
+              s."anchorId",
+              s."standardId",
+              (1 - (s.embedding <=> $1::vector)) AS similarity,
+              ROW_NUMBER() OVER (PARTITION BY s."standardId" ORDER BY s.embedding <=> $1::vector ASC) AS rn
+            FROM "Section" s
+            WHERE s.embedding IS NOT NULL
+          )
+          SELECT r.*, std.title as "standardTitle", std.type as "standardType", std.version as "standardVersion",
+                 ch.id as "chapterId", ch.title as "chapterTitle", ch.number as "chapterNumber"
+          FROM ranked r
+          LEFT JOIN "Standard" std ON r."standardId" = std.id
+          LEFT JOIN "Section" s2 ON s2.id = r.id
+          LEFT JOIN "Chapter" ch ON s2."chapterId" = ch.id
+          WHERE r.rn <= 5
+        `, vec);
+        
+        console.log(`📈 Found ${(rows as any[]).length} sections from semantic search`);
+        
+        sections = (rows as any[]).map((r: any) => ({
+          id: r.id,
+          sectionNumber: r.sectionNumber,
+          title: r.title,
+          fullTitle: r.fullTitle,
+          content: r.content,
+          wordCount: r.wordCount,
+          anchorId: r.anchorId,
+          similarity: parseFloat(r.similarity),
+          standard: { id: r.standardId, title: r.standardTitle, type: r.standardType, version: r.standardVersion },
+          chapter: r.chapterId ? { id: r.chapterId, title: r.chapterTitle, number: r.chapterNumber } : null
+        }));
+        
+        console.log(`✅ Successfully processed ${sections.length} sections with semantic search`);
+      } catch (embedError) {
+        console.error('❌ Error with semantic search:', embedError);
+        throw embedError;
+      }
+    } else {
+      console.log('🔍 Using fallback keyword search...');
+      sections = await prisma.section.findMany({
+        where: {
+          OR: [
+            { title: { contains: topicQuery, mode: 'insensitive' } },
+            { content: { contains: topicQuery, mode: 'insensitive' } },
+            { fullTitle: { contains: topicQuery, mode: 'insensitive' } }
+          ]
+        },
+        select: {
+          id: true,
+          sectionNumber: true,
+          title: true,
+          fullTitle: true,
+          content: true,
+          wordCount: true,
+          anchorId: true,
+          standard: { select: { id: true, title: true, type: true, version: true } },
+          chapter: { select: { id: true, title: true, number: true } }
+        },
+        orderBy: [ { wordCount: 'desc' }, { standard: { title: 'asc' } } ]
+      });
+      console.log(`✅ Found ${sections.length} sections with keyword search`);
+    }
+
+    // Group by standard
+    console.log('📊 Grouping sections by standard...');
+    const groupedSections = sections.reduce((acc: Record<number, any>, section: any) => {
+      const standardId = section.standard.id;
+      if (!acc[standardId]) {
+        acc[standardId] = {
+          standard: section.standard,
+          sections: []
+        };
+      }
+      acc[standardId].sections.push(section);
+      return acc;
+    }, {} as Record<number, any>);
+
+    const comparisonResults = Object.values(groupedSections);
+    console.log(`📈 Grouped into ${comparisonResults.length} standards`);
+
+    // Generate AI analysis for custom topics
+    let aiAnalysis = null;
+    if (process.env.GEMINI_API_KEY && comparisonResults.length > 0) {
+      console.log('🤖 Generating AI analysis for custom topic...');
+      try {
+        const analysisPrompt = `Analyze the following project management sections related to "${topic}" and provide a structured comparison:
+
+${comparisonResults.map((result: any) => `
+Standard: ${result.standard.title}
+Sections:
+${result.sections.map((s: any) => `- ${s.title}: ${s.content.substring(0, 200)}...`).join('\n')}
+`).join('\n')}
+
+Please provide a JSON response with exactly this structure:
+{
+  "overallSummary": "Brief 2-3 sentence summary of findings",
+  "keySimilarities": ["Similarity 1", "Similarity 2", "Similarity 3"],
+  "keyDifferences": ["Difference 1", "Difference 2", "Difference 3"],
+  "uniqueInsights": ["Insight 1", "Insight 2"],
+  "standardSummaries": {
+    "${comparisonResults[0]?.standard?.title || 'Standard 1'}": "Brief AI summary for this standard's approach to ${topic}",
+    "${comparisonResults[1]?.standard?.title || 'Standard 2'}": "Brief AI summary for this standard's approach to ${topic}",
+    "${comparisonResults[2]?.standard?.title || 'Standard 3'}": "Brief AI summary for this standard's approach to ${topic}",
+    "${comparisonResults[3]?.standard?.title || 'Standard 4'}": "Brief AI summary for this standard's approach to ${topic}",
+    "${comparisonResults[4]?.standard?.title || 'Standard 5'}": "Brief AI summary for this standard's approach to ${topic}"
+  }
+}
+
+Important: Return ONLY valid JSON, no additional text or formatting.`;
+
+        // Try multiple Gemini models as fallback
+        const models = [
+          "gemini-2.5-flash-lite",
+          "gemini-2.5-pro",
+          "gemini-2.5-flash",
+          "gemini-2.5-flash-preview-09-2025",
+          "gemini-2.0-flash",
+          "gemini-2.0-flash-lite"
+        ];
+        
+        let analysisText = '';
+        let modelUsed = '';
+        let analysisSuccess = false;
+        
+        for (const model of models) {
+          try {
+            console.log(`🤖 Trying model: ${model}`);
+            const analysisResult = await genAI.getGenerativeModel({ model }).generateContent(analysisPrompt);
+            analysisText = analysisResult.response.text();
+            modelUsed = model;
+            analysisSuccess = true;
+            console.log(`✅ Successfully got response from ${model}`);
+            console.log(`🤖 Raw AI response (${model}):`, analysisText.substring(0, 500) + '...');
+            break;
+          } catch (modelError) {
+            console.log(`❌ Model ${model} failed:`, modelError instanceof Error ? modelError.message : String(modelError));
+            continue;
+          }
+        }
+        
+        if (!analysisSuccess) {
+          console.log('❌ All Gemini models failed, using fallback');
+          aiAnalysis = {
+            overallSummary: `Found ${sections.length} relevant sections across ${comparisonResults.length} standards for "${topic}".`,
+            keySimilarities: [],
+            keyDifferences: [],
+            uniqueInsights: [],
+            standardSummaries: {}
+          };
+        } else {
+          try {
+            // Try to extract JSON from the response in case there's extra text
+            const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+            const jsonText = jsonMatch ? jsonMatch[0] : analysisText;
+            console.log(`🔍 Extracted JSON (${modelUsed}):`, jsonText.substring(0, 300) + '...');
+            
+            aiAnalysis = JSON.parse(jsonText);
+            console.log(`✅ AI analysis generated successfully using ${modelUsed}`);
+          } catch (parseError) {
+            console.log(`⚠️ Failed to parse AI analysis JSON from ${modelUsed}, using fallback`);
+            console.log('❌ Parse error:', parseError instanceof Error ? parseError.message : String(parseError));
+            console.log('📝 Raw response:', analysisText);
+            aiAnalysis = {
+              overallSummary: `Found ${sections.length} relevant sections across ${comparisonResults.length} standards for "${topic}".`,
+              keySimilarities: [],
+              keyDifferences: [],
+              uniqueInsights: [],
+              standardSummaries: {}
+            };
+          }
+        }
+      } catch (aiError) {
+        console.error('❌ Error generating AI analysis:', aiError);
+        aiAnalysis = {
+          overallSummary: `Found ${sections.length} relevant sections across ${comparisonResults.length} standards for "${topic}".`,
+          keySimilarities: [],
+          keyDifferences: [],
+          uniqueInsights: []
+        };
+      }
+    } else {
+      console.log('⚠️ No AI analysis - GEMINI_API_KEY not available or no results');
+      aiAnalysis = {
+        overallSummary: `Found ${sections.length} relevant sections across ${comparisonResults.length} standards for "${topic}".`,
+        keySimilarities: [],
+        keyDifferences: [],
+        uniqueInsights: []
+      };
+    }
+
+    const response = {
+      topic: {
+        name: topic,
+        description: `Custom comparison for "${topic}"`
+      },
+      comparisonData: {
+        overallSummary: aiAnalysis.overallSummary,
+        standards: comparisonResults.map((result: any) => ({
+          standardTitle: result.standard.title,
+          summary: `Found ${result.sections.length} relevant sections in ${result.standard.title}.`,
+          aiSummary: aiAnalysis.standardSummaries?.[result.standard.title] || `This standard provides comprehensive guidance on ${topic.toLowerCase()}, covering key aspects such as planning, implementation, and monitoring processes.`,
+          relevantSections: result.sections.map((section: any) => ({
+            sectionTitle: section.title,
+            sectionId: section.id,
+            anchorId: section.anchorId,
+            sectionNumber: section.sectionNumber,
+            relevanceScore: section.similarity || 0.8
+          }))
+        })),
+        keySimilarities: aiAnalysis.keySimilarities || [],
+        keyDifferences: aiAnalysis.keyDifferences || [],
+        uniqueInsights: aiAnalysis.uniqueInsights || []
+      },
+      generatedAt: new Date().toISOString()
+    };
+    
+    console.log('✅ Comparison completed successfully with AI analysis');
+    console.log(`📊 Final stats: ${sections.length} sections across ${comparisonResults.length} standards`);
+    
+    res.json(response);
+  } catch (error) {
+    console.error('❌ Error performing comparison:', error);
+    res.status(500).json({ error: 'Comparison failed' });
+  }
+});
+
+// 5b. GET /api/compare - Compare specific sections across standards (without AI analysis)
 app.get('/api/compare', async (req, res) => {
+  console.log('=== GET /api/compare - Query-based Comparison ===');
+  console.log('Query params:', JSON.stringify(req.query, null, 2));
+  
   try {
     const { topic, standardIds } = req.query;
     
     if (!topic || typeof topic !== 'string') {
+      console.log('❌ Error: Topic parameter is required');
       return res.status(400).json({ error: 'Topic parameter is required' });
+    }
+    
+    console.log(`🔍 Processing topic: "${topic}"`);
+    if (standardIds) {
+      console.log(`📋 Standard IDs filter: ${standardIds}`);
     }
 
     const topicQuery = topic.toLowerCase();
@@ -643,26 +912,26 @@ app.get('/api/compare', async (req, res) => {
     } else {
       // Fallback keyword search
       sections = await prisma.section.findMany({
-        where: {
-          AND: [
-            {
-              OR: [
-                { title: { contains: topicQuery, mode: 'insensitive' } },
-                { content: { contains: topicQuery, mode: 'insensitive' } },
-                { fullTitle: { contains: topicQuery, mode: 'insensitive' } }
-              ]
-            },
-            standardIdsArray.length > 0 ? { standardId: { in: standardIdsArray } } : {}
-          ]
-        },
-        select: {
-          id: true,
-          sectionNumber: true,
-          title: true,
-          fullTitle: true,
-          content: true,
-          wordCount: true,
-          anchorId: true,
+      where: {
+        AND: [
+          {
+            OR: [
+              { title: { contains: topicQuery, mode: 'insensitive' } },
+              { content: { contains: topicQuery, mode: 'insensitive' } },
+              { fullTitle: { contains: topicQuery, mode: 'insensitive' } }
+            ]
+          },
+          standardIdsArray.length > 0 ? { standardId: { in: standardIdsArray } } : {}
+        ]
+      },
+      select: {
+        id: true,
+        sectionNumber: true,
+        title: true,
+        fullTitle: true,
+        content: true,
+        wordCount: true,
+        anchorId: true,
           standard: { select: { id: true, title: true, type: true, version: true } },
           chapter: { select: { id: true, title: true, number: true } }
         },
@@ -1011,29 +1280,52 @@ app.post('/api/process/generate', async (req, res) => {
       }));
     } else {
       topSections = allSections
-        .map((s: any): any => ({ ...s, _score: scoreSection(s) }))
-        .filter((s: any) => s._score > 0)
-        .sort((a: any, b: any) => b._score - a._score)
-        .slice(0, 30);
+      .map((s: any): any => ({ ...s, _score: scoreSection(s) }))
+      .filter((s: any) => s._score > 0)
+      .sort((a: any, b: any) => b._score - a._score)
+      .slice(0, 30);
     }
 
-    // Optional Gemini synthesis for tailored steps
+    // Optional Gemini synthesis for tailored steps with fallback
     let aiStepsByPhase: Record<string, string[]> | null = null;
     if (process.env.GEMINI_API_KEY) {
       const corpusSummary = topSections.map((s: any) => `• ${s.standard.title} - ${s.sectionNumber} ${s.title}`).join('\n');
       const prompt = `Design a tailored project process for a ${scenarioId} project. Lifecycle: ${lifecycle}. Drivers: ${driverText}. Constraints: ${constraintText}.
 Use concise, actionable steps grouped by phases ${JSON.stringify(chosenPhases)}. Output strict JSON { phases: { [phase]: ["step", ...] }, summary: "..." }.
 Evidence context (titles only):\n${corpusSummary}`;
-      try {
-        const out = await model.generateContent(prompt);
-        const txt = (await out.response).text();
-        const match = txt.match(/\{[\s\S]*\}/);
-        if (match) {
-          const parsed = JSON.parse(match[0]);
-          if (parsed && parsed.phases) aiStepsByPhase = parsed.phases;
+      
+      // Try multiple Gemini models as fallback
+      const models = [
+        "gemini-2.5-pro",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-preview-09-2025",
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite"
+      ];
+      
+      for (const modelName of models) {
+        try {
+          console.log(`🤖 Process Generator: Trying model ${modelName}`);
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const out = await model.generateContent(prompt);
+          const txt = (await out.response).text();
+          const match = txt.match(/\{[\s\S]*\}/);
+          if (match) {
+            const parsed = JSON.parse(match[0]);
+            if (parsed && parsed.phases) {
+              aiStepsByPhase = parsed.phases;
+              console.log(`✅ Process Generator: Successfully generated with ${modelName}`);
+              break;
+            }
+          }
+        } catch (err) {
+          console.log(`❌ Process Generator: Model ${modelName} failed:`, err instanceof Error ? err.message : String(err));
+          continue;
         }
-      } catch (err) {
-        console.warn('Gemini synthesis failed, using heuristic generator');
+      }
+      
+      if (!aiStepsByPhase) {
+        console.warn('❌ Process Generator: All Gemini models failed, using heuristic generator');
       }
     }
 
@@ -1131,9 +1423,14 @@ app.get('/api/comparison/topics', async (req, res) => {
 
 // 8. GET /api/comparison/topics/:id - Get comparison for specific topic
 app.get('/api/comparison/topics/:id', async (req, res) => {
+  console.log('=== GET /api/comparison/topics/:id - Predefined Topic Comparison ===');
+  console.log('Topic ID:', req.params.id);
+  
   try {
     const { id } = req.params;
     const topicId = parseInt(id);
+    
+    console.log(`🔍 Processing predefined topic ID: ${topicId}`);
     
     // Get topic definition
     const topics: Record<number, { name: string; keywords: string[] }> = {
@@ -1310,9 +1607,39 @@ Focus on practical differences in methodology, terminology, and approach. Be spe
 `;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    // Try multiple Gemini models as fallback
+    const models = [
+      "gemini-2.5-flash-lite",
+      "gemini-2.5-pro",
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-preview-09-2025",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite"
+    ];
+    
+    let result = null;
+    let response = null;
+    let text = '';
+    
+    for (const modelName of models) {
+      try {
+        console.log(`🤖 AI Insights: Trying model ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        result = await model.generateContent(prompt);
+        response = await result.response;
+        text = response.text();
+        console.log(`✅ AI Insights: Successfully got response from ${modelName}`);
+        break;
+      } catch (modelError) {
+        console.log(`❌ AI Insights: Model ${modelName} failed:`, modelError instanceof Error ? modelError.message : String(modelError));
+        continue;
+      }
+    }
+    
+    if (!result) {
+      console.log('❌ AI Insights: All Gemini models failed, using fallback');
+      throw new Error('All models failed');
+    }
     
     // Try to parse JSON response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -1360,8 +1687,38 @@ Be concise and specific about what makes this standard's approach distinctive.
 `;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
+    // Try multiple Gemini models as fallback
+    const models = [
+      "gemini-2.5-pro",
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-preview-09-2025",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite"
+    ];
+    
+    let result = null;
+    let response = null;
+    
+    for (const modelName of models) {
+      try {
+        console.log(`🤖 AI Summary: Trying model ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        result = await model.generateContent(prompt);
+        response = await result.response;
+        console.log(`✅ AI Summary: Successfully got response from ${modelName}`);
+        break;
+      } catch (modelError) {
+        console.log(`❌ AI Summary: Model ${modelName} failed:`, modelError instanceof Error ? modelError.message : String(modelError));
+        continue;
+      }
+    }
+    
+    if (!result || !response) {
+      console.log('❌ AI Summary: All Gemini models failed, using fallback');
+      // Fallback to basic summary
+      return generateStandardSummary(sections, topic);
+    }
+    
     return response.text();
   } catch (error) {
     console.error('AI standard summary generation failed:', error);
