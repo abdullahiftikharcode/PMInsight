@@ -66,7 +66,7 @@ const ComparisonView = () => {
         return;
       }
       
-      // Handle predefined topic case
+      // Handle predefined topic case - now using the same API as custom topics
       if (!topicId || isNaN(parseInt(topicId))) {
         console.log('❌ No valid topicId for predefined topic');
         setError('Invalid topic ID.');
@@ -76,7 +76,20 @@ const ComparisonView = () => {
       try {
         setLoading(true);
         console.log('🔍 Using predefined topic comparison with ID:', topicId);
-        const data = await apiService.getComparison(parseInt(topicId));
+        
+        // Get the topic name from the predefined topics list
+        const topics = await apiService.getComparisonTopics();
+        const topic = topics.find(t => t.id === parseInt(topicId));
+        
+        if (!topic) {
+          console.log('❌ Topic not found for ID:', topicId);
+          setError('Topic not found.');
+          return;
+        }
+        
+        console.log('🔍 Using topic name for comparison:', topic.name);
+        // Use the same API endpoint as custom topics
+        const data = await apiService.getComparisonByTopic(topic.name);
         console.log('✅ Predefined topic comparison successful:', data);
         setComparison(data);
       } catch (err) {

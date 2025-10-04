@@ -196,7 +196,7 @@ export const apiService = {
     return response.data;
   },
 
-  // Get comparison for specific topic
+  // Get comparison for specific topic (deprecated - now using getComparisonByTopic for consistency)
   getComparison: async (topicId: number): Promise<ComparisonResponse> => {
     const response = await api.get(`/comparison/topics/${topicId}`);
     return response.data;
