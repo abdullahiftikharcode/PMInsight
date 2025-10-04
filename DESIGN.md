@@ -11,8 +11,9 @@ This document explains the key architectural and product decisions for PMInsight
 2) System Overview
 - Frontend: React + TypeScript + Vite (SPA) deployed on Vercel
 - Backend: Node.js + Express + Prisma + PostgreSQL, deployed on Render
-- AI: Google Generative AI (Gemini) for insights and process generation
-- Data: Standards → Chapters → Sections (normalized) with search and pagination
+- AI: Google Generative AI (Gemini) for insights, process generation, and vector embeddings
+- Data: Standards → Chapters → Sections (normalized) with semantic search and pagination
+- Vector Search: pgvector extension with 768-dimensional embeddings for semantic similarity
 - Routing: React Router with SPA rewrite rules to support deep links
 
 Why SPA + API: Enables fast, smooth navigation, client-side interactivity (Topic Map, skeleton loaders) and clean separation of concerns between UI and data.
@@ -24,25 +25,28 @@ Why SPA + API: Enables fast, smooth navigation, client-side interactivity (Topic
 - Vite: Lightning-fast dev/build, modern ESM; fewer config pitfalls than CRA
 - Node/Express API: Simple, minimal overhead, easy to deploy and reason about
 - Prisma ORM + PostgreSQL: Type-safe queries, migrations, and relations for standards/sections; PostgreSQL is robust and widely available on Render
-- Gemini: Concise, low-latency model for summaries and structured outputs (process steps, citations)
+- pgvector: PostgreSQL extension for vector similarity search with cosine distance
+- Gemini: Concise, low-latency model for summaries, structured outputs, and text embeddings (text-embedding-004)
 
-Alternatives considered: Django/Flask (heavier context switch with TS frontend), MongoDB (we need relational joins), REST vs GraphQL (REST is simpler for this scope).
+Alternatives considered: Django/Flask (heavier context switch with TS frontend), MongoDB (we need relational joins), REST vs GraphQL (REST is simpler for this scope), Weaviate/Pinecone (pgvector is simpler and cost-effective).
 
 3.2 Data Model
 - Normalized schema: Standard → Chapter → Section
-- Section fields include sectionNumber, title, content, and computed metadata (e.g., wordCount), enabling:
-  - Full-text search
+- Section fields include sectionNumber, title, content, computed metadata (e.g., wordCount), and vector embeddings, enabling:
+  - Full-text search (keyword-based)
+  - Semantic search (vector similarity)
   - Deep linking from comparisons and Topic Map
   - Pagination for large standards
 
-Trade-offs: Denormalized search indices could be faster but increase write complexity. Normalization keeps ingestion and updates simple.
+Trade-offs: Denormalized search indices could be faster but increase write complexity. Normalization keeps ingestion and updates simple. Vector embeddings add storage overhead but enable semantic understanding.
 
 3.3 Comparison Engine
-- Topic-driven flow: user selects a topic → API composes similarities, differences, unique points → deep links to sections
+- Topic-driven flow: user selects a topic → API uses semantic search to find top 5 sections per standard → composes similarities, differences, unique points → deep links to sections
+- Semantic search: Uses vector embeddings to find conceptually similar content even with different terminology
 - Reasoning: Users think in topics first; evidence is essential → every comparison point links to the exact section
 - Deep links use SPA routing (/section/:id) to avoid server 404s; Vercel rewrites route everything to index.html
 
-Alternatives: Fully AI-generated comparisons without structure were rejected—lack of deterministic traceability. The chosen approach blends curated structure with AI assistance.
+Alternatives: Fully AI-generated comparisons without structure were rejected—lack of deterministic traceability. The chosen approach blends semantic retrieval with AI assistance for structured analysis.
 
 3.4 Insights Dashboard
 - Aggregates totals and topic coverage; optional AI summary for narrative insight
@@ -51,9 +55,10 @@ Alternatives: Fully AI-generated comparisons without structure were rejected—l
 3.5 Process Generator
 - Inputs: scenario, lifecycle, constraints, drivers
 - Output: phases → activities → deliverables + citation links to standards sections
+- Semantic retrieval: Uses vector embeddings to find most relevant sections for each activity, ensuring evidence-based citations
 - Design: Prompt orchestration encourages factual outputs with explicit references. UI provides export (JSON/CSV/Print) for evidence submission
 
-Trade-off: Stronger guardrails (schemas) add prompt complexity but produce more reliable, gradable artifacts.
+Trade-off: Stronger guardrails (schemas) add prompt complexity but produce more reliable, gradable artifacts. Semantic search improves citation relevance over keyword matching.
 
 3.6 Topic Map (Innovation)
 - Backend /api/graph computes topic coverage cheaply first (counts), then fetches limited sections per top topics
@@ -72,24 +77,26 @@ Alternatives: Client-only computation was too heavy; naive querying caused Prism
 - Tooltips clamped within viewport; passive event listeners respected; React hook order stabilized to remove update-depth errors
 - 404 page is branded and provides quick paths back to main features
 
-3.9 Retrieval Strategy Without Embeddings (Resource Constraints)
-- Decision: Do not use vector embeddings or a vector database in this phase. Rely on deterministic keyword and heuristic scoring for search, comparison, and process-citation retrieval.
+3.9 Search and Retrieval Strategy
+- Dual approach: Both keyword-based and semantic search with user-controlled toggles
+- Semantic search: Uses Gemini text-embedding-004 to generate 768-dimensional vectors stored in PostgreSQL with pgvector
+- Keyword search: SQL filtering with case-insensitive `contains` on `title`, `fullTitle`, and `content` as fallback
+- Implementation:
+  - Global search: `/api/search` (keyword) and `/api/search/semantic` (vector)
+  - Per-standard search: `/api/standards/:id/search` (keyword) and `/api/standards/:id/search/semantic` (vector)
+  - Comparison engine: Uses semantic search to find top 5 sections per standard by cosine similarity
+  - Process generator: Uses semantic search for evidence-based citations
+- UI toggles: Users can switch between keyword and semantic search modes in both global and per-standard views
 - Rationale:
-  - Operational cost/complexity: Hosting and maintaining a vector DB (pgvector/Weaviate/FAISS service) exceeds the course scope and available resources.
-  - Ingestion overhead: Chunking, embedding, re-embedding on data changes, and index maintenance add time and cost.
-  - Determinism and grading: Keyword+rule-based retrieval provides stable, explainable outcomes with transparent evidence links—easier to verify in an academic context.
-  - Latency: Avoids additional network round-trips and cold starts to embedding services; current dataset size is modest, so SQL-based matching is sufficient.
-- Approach implemented:
-  - SQL filtering with case-insensitive `contains` on `title`, `fullTitle`, and `content`.
-  - Lightweight similarity heuristics (title match > content match; partial word overlaps) to rank results.
-  - Topic-driven queries (predefined keyword sets) for comparison and process generation evidence.
-- Upgrade path (Future Improvements):
-  - Introduce `tsvector` indexes in Postgres for faster full-text search.
-  - Optionally adopt Meilisearch/OpenSearch for fuzzy ranking and typo tolerance.
-  - Add embeddings (pgvector) once resources allow, keeping the same API surface so the UI remains unchanged.
+  - Semantic search provides better conceptual understanding and finds relevant content even with different terminology
+  - Keyword search provides deterministic, explainable results for exact matches
+  - Dual approach accommodates different user preferences and use cases
+  - Graceful fallback ensures system reliability even if embedding service is unavailable
 
 4) Performance Considerations
 - Graph endpoint optimized to avoid expensive full scans and pool exhaustion
+- Vector search: IVFFLAT index on embeddings for fast cosine similarity queries
+- Embedding generation: Batch processing with rate limiting and retry logic
 - Debounced controls (e.g., sliders) to prevent overfetching
 - Section pagination and limited graph fetches reduce payload sizes
 - Client navigations via SPA links to avoid server round-trips
@@ -105,11 +112,13 @@ Alternatives: Client-only computation was too heavy; naive querying caused Prism
 - PDF/EPUB ingestion is assumed pre-processed into DB—automated pipeline is out of scope
 
 7) Future Improvements
-- Server-side search indexing (e.g., Postgres tsvector, Meilisearch) for faster global search
+- Advanced vector search: HNSW index for even faster similarity queries
+- Hybrid search: Combine semantic and keyword search with learned ranking
 - Saved comparisons and shareable links
 - User profiles and personalized topic maps
 - Graph clustering and community detection for advanced analytics
 - Offline packaging for standards in classroom demos
+- Real-time embedding updates when content changes
 
 8) References
 - PMBOK 7th Edition; Process Groups Practice Guide (PMI)
