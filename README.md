@@ -251,7 +251,7 @@ The application will be available at:
  - **ProcessGenerator**: Form-driven generator producing a tailored process with deep links; includes a visible loading overlay while generating
  - **TopicMap**: SVG-based interactive network of topics, sections, and standards
 
-## 🗺️ Visual Topic Map
+## 🗺️ Visual Topic Map working:
 
 Explore how common topics connect to specific sections across all standards.
 
