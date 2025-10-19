@@ -14,7 +14,6 @@ import {
   FaExclamationTriangle as FaWarning,
   FaProjectDiagram
 } from 'react-icons/fa';
-import LoadingSkeleton from './LoadingSkeleton';
 
 const ComparisonView = () => {
   const { topicId } = useParams<{ topicId: string }>();
@@ -22,7 +21,6 @@ const ComparisonView = () => {
   const [comparison, setComparison] = useState<ComparisonResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [initialLoading, setInitialLoading] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
   
   // Check if this is a custom topic comparison
