@@ -70,7 +70,7 @@ Alternatives: Client-only computation was too heavy; naive querying caused Prism
 3.7 Routing and Deployment
 - SPA rewrites on Vercel (vercel.json) so direct links like /standard/8 or /section/351 render in the client
 - All internal links use Link/programmatic navigation to avoid full page reloads
-- Backend health: /api/ping for Render health checks, plus /api/health in app
+- Backend health: /api/ping for Render health checks, plus /api/health in app ..
 
 3.8 Loading, Errors, and UX Polish
 - Reusable skeleton loaders for major pages; graceful error cards with retry or navigation
