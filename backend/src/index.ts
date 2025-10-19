@@ -3,6 +3,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { TemplateEngine } from './process-templates/template-engine';
+import { CitationMapper } from './citation-engine/citation-mapper';
+import { EvidenceValidator } from './citation-engine/evidence-validator';
+import { JustificationGenerator } from './citation-engine/justification-generator';
 
 dotenv.config();
 
@@ -13,6 +17,12 @@ const prisma = new PrismaClient();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 const embedModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+
+// Initialize Phase 2 components
+const templateEngine = new TemplateEngine();
+const citationMapper = new CitationMapper();
+const evidenceValidator = new EvidenceValidator();
+const justificationGenerator = new JustificationGenerator();
 
 // Middleware
 app.use(cors());
@@ -1733,6 +1743,216 @@ function generateStandardSummary(sections: any[], topic: any) {
   const avgRelevance = sections.reduce((sum, s) => sum + s.relevanceScore, 0) / sectionCount;
   
   return `This standard covers ${topic.name.toLowerCase()} across ${sectionCount} sections with an average relevance score of ${avgRelevance.toFixed(1)}. The approach emphasizes practical implementation and real-world application.`;
+}
+
+// ===== PHASE 2 ENHANCED API ENDPOINTS =====
+
+// 8. GET /api/process/templates - Get available process templates
+app.get('/api/process/templates', async (req, res) => {
+  try {
+    const templates = templateEngine.getAvailableTemplates();
+    res.json(templates);
+  } catch (error) {
+    console.error('Error fetching templates:', error);
+    res.status(500).json({ error: 'Failed to fetch templates' });
+  }
+});
+
+// 9. GET /api/process/templates/:scenarioId - Get specific template
+app.get('/api/process/templates/:scenarioId', async (req, res) => {
+  try {
+    const { scenarioId } = req.params;
+    const template = templateEngine.getTemplate(scenarioId);
+    
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+    
+    res.json(template);
+  } catch (error) {
+    console.error('Error fetching template:', error);
+    res.status(500).json({ error: 'Failed to fetch template' });
+  }
+});
+
+// 10. POST /api/process/generate/scenario/:scenarioId - Generate scenario-specific process
+app.post('/api/process/generate/scenario/:scenarioId', async (req, res) => {
+  try {
+    const { scenarioId } = req.params;
+    const { projectName, lifecycle, constraints, drivers, teamSize, duration, budget, riskTolerance } = req.body;
+    
+    const inputs = {
+      projectName: projectName || 'Untitled Project',
+      scenarioId,
+      lifecycle: lifecycle || 'hybrid',
+      constraints: constraints || [],
+      drivers: drivers || [],
+      teamSize,
+      duration,
+      budget,
+      riskTolerance
+    };
+    
+    const process = await templateEngine.generateProcess(inputs);
+    res.json(process);
+  } catch (error) {
+    console.error('Error generating process:', error);
+    res.status(500).json({ error: 'Failed to generate process' });
+  }
+});
+
+// 11. POST /api/process/validate - Validate process quality
+app.post('/api/process/validate', async (req, res) => {
+  try {
+    const { phases, scenario } = req.body;
+    
+    if (!phases || !Array.isArray(phases)) {
+      return res.status(400).json({ error: 'Invalid phases data' });
+    }
+    
+    const validation = await evidenceValidator.validateProcess(phases);
+    
+    // Add scenario-specific validation
+    if (scenario) {
+      const scenarioIssues = await evidenceValidator.validateScenarioRequirements(phases, scenario);
+      validation.issues.push(...scenarioIssues);
+    }
+    
+    res.json(validation);
+  } catch (error) {
+    console.error('Error validating process:', error);
+    res.status(500).json({ error: 'Failed to validate process' });
+  }
+});
+
+// 12. POST /api/process/compare - Compare processes across scenarios
+app.post('/api/process/compare', async (req, res) => {
+  try {
+    const { scenarioIds } = req.body;
+    
+    if (!scenarioIds || !Array.isArray(scenarioIds) || scenarioIds.length < 2) {
+      return res.status(400).json({ error: 'At least 2 scenario IDs required for comparison' });
+    }
+    
+    const comparison = await templateEngine.compareProcesses(scenarioIds);
+    res.json(comparison);
+  } catch (error) {
+    console.error('Error comparing processes:', error);
+    res.status(500).json({ error: 'Failed to compare processes' });
+  }
+});
+
+// 13. POST /api/process/export/:format - Export process in various formats
+app.post('/api/process/export/:format', async (req, res) => {
+  try {
+    const { format } = req.params;
+    const { process } = req.body;
+    
+    if (!process) {
+      return res.status(400).json({ error: 'Process data required' });
+    }
+    
+    let exportData;
+    let contentType;
+    let filename;
+    
+    switch (format.toLowerCase()) {
+      case 'json':
+        exportData = JSON.stringify(process, null, 2);
+        contentType = 'application/json';
+        filename = `${process.projectName || 'process'}.json`;
+        break;
+      case 'csv':
+        exportData = generateCSV(process);
+        contentType = 'text/csv';
+        filename = `${process.projectName || 'process'}.csv`;
+        break;
+      case 'pdf':
+        // For now, return JSON - PDF generation would require additional libraries
+        exportData = JSON.stringify(process, null, 2);
+        contentType = 'application/json';
+        filename = `${process.projectName || 'process'}.json`;
+        break;
+      default:
+        return res.status(400).json({ error: 'Unsupported export format' });
+    }
+    
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(exportData);
+  } catch (error) {
+    console.error('Error exporting process:', error);
+    res.status(500).json({ error: 'Failed to export process' });
+  }
+});
+
+// 14. GET /api/process/statistics - Get process generation statistics
+app.get('/api/process/statistics', async (req, res) => {
+  try {
+    const templates = templateEngine.getAvailableTemplates();
+    const statistics = {
+      totalTemplates: templates.length,
+      scenarios: templates.map(t => ({
+        id: t.scenario,
+        name: t.name,
+        lifecycle: t.lifecycle,
+        duration: t.duration,
+        teamSize: t.teamSize
+      })),
+      standardsCoverage: {
+        PMBOK: templates.filter(t => t.phases.some(p => 
+          p.activities.some(a => a.citations?.some(c => c.standard.includes('PMBOK')))
+        )).length,
+        PRINCE2: templates.filter(t => t.phases.some(p => 
+          p.activities.some(a => a.citations?.some(c => c.standard.includes('PRINCE2')))
+        )).length,
+        ISO: templates.filter(t => t.phases.some(p => 
+          p.activities.some(a => a.citations?.some(c => c.standard.includes('ISO')))
+        )).length
+      }
+    };
+    
+    res.json(statistics);
+  } catch (error) {
+    console.error('Error fetching statistics:', error);
+    res.status(500).json({ error: 'Failed to fetch statistics' });
+  }
+});
+
+// Helper function to generate CSV from process
+function generateCSV(process: any): string {
+  const rows: string[] = ['Phase,Activity,Deliverables,Standard,Section,Justification'];
+  
+  process.phases.forEach((phase: any) => {
+    phase.activities.forEach((activity: any) => {
+      const deliverables = (activity.deliverables || []).join('; ');
+      const citations = activity.citations || [];
+      
+      if (citations.length > 0) {
+        citations.forEach((citation: any) => {
+          rows.push([
+            `"${phase.name}"`,
+            `"${activity.name}"`,
+            `"${deliverables}"`,
+            `"${citation.standard}"`,
+            `"${citation.section}"`,
+            `"${citation.justification || ''}"`
+          ].join(','));
+        });
+      } else {
+        rows.push([
+          `"${phase.name}"`,
+          `"${activity.name}"`,
+          `"${deliverables}"`,
+          '""',
+          '""',
+          '""'
+        ].join(','));
+      }
+    });
+  });
+  
+  return rows.join('\n');
 }
 
 // Health check endpoint

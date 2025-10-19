@@ -12,6 +12,15 @@ import ComparisonView from './components/ComparisonView';
 import TopicMap from './components/TopicMap';
 import NotFound from './components/NotFound';
 
+// Phase 2B: Enhanced Process Components
+import ProcessDesignerPage from './components/ProcessDesignerPage';
+import ProcessDemoPage from './components/ProcessDemoPage';
+import PhaseTimeline from './components/process/PhaseTimeline';
+import RoleResponsibilityMatrix from './components/process/RoleResponsibilityMatrix';
+import DecisionGateFramework from './components/process/DecisionGateFramework';
+import ProcessComparisonView from './components/process/ProcessComparisonView';
+import ScenarioSelector from './components/ScenarioSelector';
+
 import './App.css';
 
 function App() {
@@ -32,6 +41,18 @@ function App() {
           <Route path="/comparison/custom" element={<ComparisonView />} />
           <Route path="/comparison/:topicId" element={<ComparisonView />} />
           <Route path="/search" element={<SearchResults query="" onBack={() => window.history.back()} />} />
+          
+          {/* Phase 2B: Enhanced Process Routes */}
+          <Route path="/process-designer" element={<ProcessDesignerPage />} />
+          <Route path="/process-designer/:scenario" element={<ProcessDesignerPage />} />
+          <Route path="/process-demo" element={<ProcessDemoPage />} />
+          <Route path="/process-flow" element={<div>Process Flow Component - Demo data needed</div>} />
+          <Route path="/process-timeline" element={<PhaseTimeline phases={[]} />} />
+          <Route path="/process-matrix" element={<RoleResponsibilityMatrix phases={[]} />} />
+          <Route path="/process-gates" element={<DecisionGateFramework phases={[]} />} />
+          <Route path="/process-comparison" element={<ProcessComparisonView processes={[]} />} />
+          <Route path="/scenario-selector" element={<ScenarioSelector onScenarioSelect={() => {}} />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

@@ -8,7 +8,8 @@ import {
   FaPlay,
   FaRocket,
   FaUsers,
-  FaLightbulb
+  FaLightbulb,
+  FaEye
 } from 'react-icons/fa';
 
 const LandingPage = () => {
@@ -25,6 +26,10 @@ const LandingPage = () => {
             <Link to="/standards" className="reddit-nav-link">
               <FaBook className="me-1" />
               Standards
+            </Link>
+            <Link to="/process-designer" className="reddit-nav-link">
+              <FaRocket className="me-1" />
+              Process Designer
             </Link>
             <Link to="/insights" className="reddit-nav-link">
               <FaChartBar className="me-1" />
@@ -144,6 +149,24 @@ const LandingPage = () => {
             <p className="feature-description">
               Discover patterns, trends, and insights across different project management methodologies and standards.
             </p>
+          </div>
+
+          <div className="feature-card reddit-fade-in" style={{animationDelay: '0.6s'}}>
+            <FaRocket className="feature-icon" />
+            <h3 className="feature-title">Process Designer</h3>
+            <p className="feature-description">
+              Generate tailored project processes with evidence-based recommendations and visual process flows.
+            </p>
+            <div className="mt-2">
+              <Link to="/process-designer" className="btn-reddit-secondary btn-sm me-2">
+                <FaArrowRight className="me-1" />
+                Try Process Designer
+              </Link>
+              <Link to="/process-demo" className="btn-reddit-outline btn-sm">
+                <FaEye className="me-1" />
+                View Demo
+              </Link>
+            </div>
           </div>
         </div>
       </div>

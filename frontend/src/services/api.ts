@@ -77,24 +77,57 @@ export interface ComparisonResponse {
   generatedAt: string;
 }
 
+export interface Phase {
+  name: string;
+  description: string;
+  duration: string;
+  activities: Activity[];
+}
+
+export interface Activity {
+  name: string;
+  description: string;
+  deliverables: string[];
+  duration: string;
+  roles: string[];
+  citations?: Citation[];
+}
+
+export interface Citation {
+  standard: string;
+  section: string;
+  title: string;
+  justification: string;
+  confidence?: number;
+  sectionId?: string;
+}
+
 export interface GeneratedProcessResponse {
   summary: string;
-  phases: Array<{
-    name: string;
-    activities: Array<{
-      name: string;
-      deliverables: string[];
-      citations: Array<{
-        standardId: number;
-        standardTitle: string;
-        sectionId: number;
-        sectionNumber: string;
-        anchorId: string;
-        title: string;
-      }>;
-    }>;
-  }>;
+  phases: Phase[];
   generatedAt: string;
+  projectName: string;
+  scenario: string;
+  evidence: {
+    totalCitations: number;
+    standardsCoverage: {
+      PMBOK: number;
+      PRINCE2: number;
+      ISO21500: number;
+      ISO21502: number;
+    };
+    confidenceScore: number;
+    qualityMetrics: {
+      completeness: number;
+      accuracy: number;
+      relevance: number;
+    };
+  };
+  tailoring: {
+    rationale: string;
+    decisions: string[];
+    omitted: string[];
+  };
 }
 
 export interface TopicGraphNode {
@@ -230,6 +263,92 @@ export const apiService = {
     if (params?.sectionsPerTopic) sp.set('sectionsPerTopic', String(params.sectionsPerTopic));
     const qs = sp.toString();
     const response = await api.get(`/graph${qs ? `?${qs}` : ''}`);
+    return response.data;
+  },
+
+  // Phase 2B: Enhanced Process Generation API
+  // Get available process templates
+  getProcessTemplates: async (): Promise<any[]> => {
+    const response = await api.get('/process/templates');
+    return response.data;
+  },
+
+  // Get specific template
+  getProcessTemplate: async (scenarioId: string): Promise<any> => {
+    const response = await api.get(`/process/templates/${scenarioId}`);
+    return response.data;
+  },
+
+  // Generate scenario-specific process
+  generateProcessForScenario: async (scenarioId: string, inputs: {
+    projectName: string;
+    lifecycle: 'predictive' | 'agile' | 'hybrid';
+    constraints: string[];
+    drivers: string[];
+    teamSize?: string;
+    duration?: string;
+    budget?: string;
+    riskTolerance?: 'low' | 'medium' | 'high';
+  }): Promise<GeneratedProcessResponse> => {
+    const response = await api.post(`/process/generate/scenario/${scenarioId}`, inputs);
+    return response.data;
+  },
+
+  // Validate process quality
+  validateProcess: async (phases: Phase[], scenario?: string): Promise<{
+    isValid: boolean;
+    issues: Array<{
+      type: string;
+      phase: string;
+      activity: string;
+      severity: 'low' | 'medium' | 'high';
+      message: string;
+      recommendation: string;
+    }>;
+    recommendations: string[];
+    qualityScore: number;
+  }> => {
+    const response = await api.post('/process/validate', { phases, scenario });
+    return response.data;
+  },
+
+  // Compare processes across scenarios
+  compareProcesses: async (scenarioIds: string[]): Promise<{
+    scenarios: string[];
+    phases: any[];
+    similarities: string[];
+    differences: string[];
+    recommendations: string[];
+  }> => {
+    const response = await api.post('/process/compare', { scenarioIds });
+    return response.data;
+  },
+
+  // Export process in various formats
+  exportProcess: async (process: any, format: 'json' | 'csv' | 'pdf'): Promise<string> => {
+    const response = await api.post(`/process/export/${format}`, { process }, {
+      responseType: 'text'
+    });
+    return response.data;
+  },
+
+  // Get process generation statistics
+  getProcessStatistics: async (): Promise<{
+    totalTemplates: number;
+    scenarios: Array<{
+      id: string;
+      name: string;
+      lifecycle: string;
+      duration: string;
+      teamSize: string;
+    }>;
+    standardsCoverage: {
+      PMBOK: number;
+      PRINCE2: number;
+      ISO: number;
+    };
+  }> => {
+    const response = await api.get('/process/statistics');
     return response.data;
   },
 };

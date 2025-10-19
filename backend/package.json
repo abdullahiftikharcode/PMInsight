@@ -26,16 +26,17 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.16.2",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsdom": "^21.1.7",
+    "axios": "^1.12.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "epub2": "^3.0.2",
     "express": "^5.1.0",
     "jsdom": "^27.0.0",
     "pdf-parse": "^1.1.1",
-    "prisma": "^6.16.2",
-    "@types/express": "^5.0.3",
-    "@types/cors": "^2.8.19",
-    "@types/jsdom": "^21.1.7"
+    "prisma": "^6.16.2"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",

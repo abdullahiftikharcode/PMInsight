@@ -98,8 +98,8 @@ const ProcessGenerator = () => {
           `"${p.name}"`,
           `"${a.name}"`,
           `"${(a.deliverables||[]).join('; ')}"`,
-          `"${first ? first.standardTitle : ''}"`,
-          `"${first ? first.sectionNumber : ''}"`
+          `"${first ? first.standard : ''}"`,
+          `"${first ? first.section : ''}"`
         ].join(','));
       });
     });
@@ -141,6 +141,7 @@ const ProcessGenerator = () => {
           <Link to="/comparison" className="reddit-sidebar-link"><FaBook className="me-2" /><span className="label">Comparison</span></Link>
           <Link to="/insights" className="reddit-sidebar-link"><FaChartBar className="me-2" /><span className="label">Insights</span></Link>
           <Link to="/process-generator" className="reddit-sidebar-link active"><FaCogs className="me-2" /><span className="label">Process Generator</span></Link>
+          <Link to="/process-designer" className="reddit-sidebar-link"><FaProjectDiagram className="me-2" /><span className="label">Process Designer</span></Link>
           <Link to="/map" className="reddit-sidebar-link"><FaProjectDiagram className="me-2" /><span className="label">Topic Map</span></Link>
         </div>
       </div>
@@ -153,6 +154,11 @@ const ProcessGenerator = () => {
                 <FaCogs className="me-2" /> Process Generator
               </h1>
               <p className="reddit-text-secondary mb-0">Generate tailored project processes for specific scenarios with evidence-based links.</p>
+              <div className="mt-3">
+                <Link to="/process-designer" className="btn btn-outline-primary btn-sm">
+                  <FaProjectDiagram className="me-1" /> Enhanced Process Designer
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -261,7 +267,7 @@ const ProcessGenerator = () => {
                                           {visible.map((c, ci) => (
                                             <div key={ci} className="mb-1">
                                               <Link to={`/section/${c.sectionId}`} className="text-info text-decoration-none">
-                                                <FaBook className="me-1" /> {c.standardTitle} {c.sectionNumber}
+                                                <FaBook className="me-1" /> {c.standard} {c.section}
                                               </Link>
                                             </div>
                                           ))}
