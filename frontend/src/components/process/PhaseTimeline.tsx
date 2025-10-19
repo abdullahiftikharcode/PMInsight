@@ -29,12 +29,12 @@ const PhaseTimeline: React.FC<PhaseTimelineProps> = ({
 
   const getPhaseColor = (index: number) => {
     const colors = [
-      'bg-blue-500',
-      'bg-green-500',
-      'bg-purple-500',
-      'bg-orange-500',
-      'bg-pink-500',
-      'bg-indigo-500'
+      'bg-primary',
+      'bg-success',
+      'bg-info',
+      'bg-warning',
+      'bg-danger',
+      'bg-secondary'
     ];
     return colors[index % colors.length];
   };
@@ -63,107 +63,114 @@ const PhaseTimeline: React.FC<PhaseTimelineProps> = ({
   if (orientation === 'vertical') {
     return (
       <div className="phase-timeline-vertical">
-        <div className="relative">
+        <div className="position-relative">
           {/* Timeline Line */}
-          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-300"></div>
+          <div className="position-absolute" style={{left: '24px', top: 0, bottom: 0, width: '2px', backgroundColor: 'var(--border-light)'}}></div>
           
           {phases.map((phase, index) => {
             const progress = calculatePhaseProgress(phase);
             const isSelected = selectedPhase === phase.name;
             
             return (
-              <div key={index} className="relative flex items-start mb-8">
+              <div key={index} className="position-relative d-flex align-items-start mb-4">
                 {/* Phase Node */}
-                <div className={`relative z-10 w-12 h-12 rounded-full ${getPhaseColor(index)} flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
+                <div className={`position-relative rounded-circle ${getPhaseColor(index)} d-flex align-items-center justify-content-center text-white fw-bold fs-5 shadow`} 
+                     style={{width: '48px', height: '48px', zIndex: 10}}>
                   <span>{getPhaseIcon(phase.name)}</span>
                 </div>
                 
                 {/* Phase Content */}
-                <div className="ml-6 flex-1">
+                <div className="ms-3 flex-grow-1">
                   <div 
-                    className={`bg-white rounded-lg shadow-sm border p-4 cursor-pointer transition-all ${
-                      isSelected ? 'ring-2 ring-blue-500 shadow-md' : 'hover:shadow-md'
+                    className={`reddit-card cursor-pointer transition-all ${
+                      isSelected ? 'border-primary shadow-md' : ''
                     }`}
                     onClick={() => handlePhaseClick(phase)}
+                    style={{cursor: 'pointer'}}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{phase.name}</h3>
-                      <div className="flex items-center space-x-3 text-sm text-gray-500">
-                        {showDuration && phase.duration && (
-                          <span className="flex items-center space-x-1">
-                            <FaClock />
-                            <span>{phase.duration}</span>
-                          </span>
-                        )}
-                        {showActivityCount && (
-                          <span className="flex items-center space-x-1">
-                            <FaTasks />
-                            <span>{phase.activities.length}</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <p className="text-sm text-gray-600 mb-3">{phase.description}</p>
-                    
-                    {/* Progress Bar */}
-                    <div className="mb-3">
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span>Evidence Coverage</span>
-                        <span>{progress.toFixed(0)}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${getPhaseColor(index)}`}
-                          style={{ width: `${progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    
-                    {/* Phase Stats */}
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Activities:</span>
-                        <span className="ml-2 font-medium">{phase.activities.length}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Evidence:</span>
-                        <span className="ml-2 font-medium">
-                          {phase.activities.reduce((sum, activity) => 
-                            sum + (activity.citations?.length || 0), 0
+                    <div className="reddit-card-body">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <h3 className="h5 fw-bold reddit-text-primary">{phase.name}</h3>
+                        <div className="d-flex align-items-center gap-3 reddit-text-muted small">
+                          {showDuration && phase.duration && (
+                            <span className="d-flex align-items-center">
+                              <FaClock className="me-1" />
+                              <span>{phase.duration}</span>
+                            </span>
                           )}
-                        </span>
+                          {showActivityCount && (
+                            <span className="d-flex align-items-center">
+                              <FaTasks className="me-1" />
+                              <span>{phase.activities.length}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <p className="reddit-text-secondary small mb-3">{phase.description}</p>
+                      
+                      {/* Progress Bar */}
+                      <div className="mb-3">
+                        <div className="d-flex justify-content-between reddit-text-muted small mb-1">
+                          <span>Evidence Coverage</span>
+                          <span>{progress.toFixed(0)}%</span>
+                        </div>
+                        <div className="progress" style={{height: '8px'}}>
+                          <div 
+                            className={`progress-bar ${getPhaseColor(index)}`}
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      
+                      {/* Phase Stats */}
+                      <div className="row g-3 small">
+                        <div className="col-6">
+                          <span className="reddit-text-muted">Activities:</span>
+                          <span className="ms-2 fw-medium reddit-text-primary">{phase.activities.length}</span>
+                        </div>
+                        <div className="col-6">
+                          <span className="reddit-text-muted">Evidence:</span>
+                          <span className="ms-2 fw-medium reddit-text-primary">
+                            {phase.activities.reduce((sum, activity) => 
+                              sum + (activity.citations?.length || 0), 0
+                            )}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                   
                   {/* Selected Phase Activities */}
                   {isSelected && (
-                    <div className="mt-4 ml-6 space-y-2">
+                    <div className="mt-3 ms-3">
                       {phase.activities.map((activity, activityIndex) => (
                         <div 
                           key={activityIndex}
-                          className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                          className="reddit-card mb-2 cursor-pointer"
                           onClick={() => onActivityClick?.(activity)}
+                          style={{cursor: 'pointer'}}
                         >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium text-gray-900">{activity.name}</h4>
-                              <p className="text-sm text-gray-600">{activity.description}</p>
-                            </div>
-                            <div className="flex items-center space-x-2 text-sm text-gray-500">
-                              {activity.duration && (
-                                <span className="flex items-center space-x-1">
-                                  <FaClock />
-                                  <span>{activity.duration}</span>
-                                </span>
-                              )}
-                              {activity.citations && activity.citations.length > 0 && (
-                                <span className="flex items-center space-x-1 text-blue-600">
-                                  <FaBook />
-                                  <span>{activity.citations.length}</span>
-                                </span>
-                              )}
+                          <div className="reddit-card-body">
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
+                                <h4 className="fw-medium reddit-text-primary small">{activity.name}</h4>
+                                <p className="reddit-text-secondary small">{activity.description}</p>
+                              </div>
+                              <div className="d-flex align-items-center gap-2 reddit-text-muted small">
+                                {activity.duration && (
+                                  <span className="d-flex align-items-center">
+                                    <FaClock className="me-1" />
+                                    <span>{activity.duration}</span>
+                                  </span>
+                                )}
+                                {activity.citations && activity.citations.length > 0 && (
+                                  <span className="d-flex align-items-center text-primary">
+                                    <FaBook className="me-1" />
+                                    <span>{activity.citations.length}</span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -182,85 +189,93 @@ const PhaseTimeline: React.FC<PhaseTimelineProps> = ({
   // Horizontal Timeline
   return (
     <div className="phase-timeline-horizontal">
-      <div className="relative">
+      <div className="position-relative">
         {/* Timeline Line */}
-        <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-300"></div>
+        <div className="position-absolute" style={{top: '24px', left: 0, right: 0, height: '2px', backgroundColor: 'var(--border-light)'}}></div>
         
-        <div className="flex justify-between">
+        <div className="d-flex justify-content-between">
           {phases.map((phase, index) => {
             const progress = calculatePhaseProgress(phase);
             const isSelected = selectedPhase === phase.name;
             
             return (
-              <div key={index} className="relative flex flex-col items-center">
+              <div key={index} className="position-relative d-flex flex-column align-items-center">
                 {/* Phase Node */}
-                <div className={`relative z-10 w-12 h-12 rounded-full ${getPhaseColor(index)} flex items-center justify-center text-white font-bold text-lg shadow-lg cursor-pointer hover:scale-110 transition-transform`}>
+                <div className={`position-relative rounded-circle ${getPhaseColor(index)} d-flex align-items-center justify-content-center text-white fw-bold fs-5 shadow cursor-pointer`}
+                     style={{width: '48px', height: '48px', zIndex: 10}}
+                     onClick={() => handlePhaseClick(phase)}>
                   <span>{getPhaseIcon(phase.name)}</span>
                 </div>
                 
                 {/* Phase Content */}
-                <div className="mt-4 w-64">
+                <div className="mt-3" style={{width: '256px'}}>
                   <div 
-                    className={`bg-white rounded-lg shadow-sm border p-4 cursor-pointer transition-all ${
-                      isSelected ? 'ring-2 ring-blue-500 shadow-md' : 'hover:shadow-md'
+                    className={`reddit-card cursor-pointer transition-all ${
+                      isSelected ? 'border-primary shadow-md' : ''
                     }`}
                     onClick={() => handlePhaseClick(phase)}
+                    style={{cursor: 'pointer'}}
                   >
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{phase.name}</h3>
-                    <p className="text-sm text-gray-600 mb-3">{phase.description}</p>
-                    
-                    {/* Progress Bar */}
-                    <div className="mb-3">
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span>Evidence</span>
-                        <span>{progress.toFixed(0)}%</span>
+                    <div className="reddit-card-body">
+                      <h3 className="h5 fw-bold reddit-text-primary mb-2">{phase.name}</h3>
+                      <p className="reddit-text-secondary small mb-3">{phase.description}</p>
+                      
+                      {/* Progress Bar */}
+                      <div className="mb-3">
+                        <div className="d-flex justify-content-between reddit-text-muted small mb-1">
+                          <span>Evidence</span>
+                          <span>{progress.toFixed(0)}%</span>
+                        </div>
+                        <div className="progress" style={{height: '8px'}}>
+                          <div 
+                            className={`progress-bar ${getPhaseColor(index)}`}
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${getPhaseColor(index)}`}
-                          style={{ width: `${progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    
-                    {/* Phase Stats */}
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex items-center space-x-1">
-                        <FaTasks className="text-gray-400" />
-                        <span className="text-gray-500">{phase.activities.length}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <FaBook className="text-blue-500" />
-                        <span className="text-gray-500">
-                          {phase.activities.reduce((sum, activity) => 
-                            sum + (activity.citations?.length || 0), 0
-                          )}
-                        </span>
+                      
+                      {/* Phase Stats */}
+                      <div className="row g-2 small">
+                        <div className="col-6 d-flex align-items-center">
+                          <FaTasks className="reddit-text-muted me-1" />
+                          <span className="reddit-text-muted">{phase.activities.length}</span>
+                        </div>
+                        <div className="col-6 d-flex align-items-center">
+                          <FaBook className="text-primary me-1" />
+                          <span className="reddit-text-muted">
+                            {phase.activities.reduce((sum, activity) => 
+                              sum + (activity.citations?.length || 0), 0
+                            )}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                   
                   {/* Selected Phase Activities */}
                   {isSelected && (
-                    <div className="mt-4 space-y-2 max-h-64 overflow-y-auto">
+                    <div className="mt-3" style={{maxHeight: '256px', overflowY: 'auto'}}>
                       {phase.activities.map((activity, activityIndex) => (
                         <div 
                           key={activityIndex}
-                          className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                          className="reddit-card mb-2 cursor-pointer"
                           onClick={() => onActivityClick?.(activity)}
+                          style={{cursor: 'pointer'}}
                         >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium text-gray-900 text-sm">{activity.name}</h4>
-                              <p className="text-xs text-gray-600">{activity.description}</p>
-                            </div>
-                            <div className="flex items-center space-x-1 text-xs text-gray-500">
-                              {activity.citations && activity.citations.length > 0 && (
-                                <span className="flex items-center space-x-1 text-blue-600">
-                                  <FaBook />
-                                  <span>{activity.citations.length}</span>
-                                </span>
-                              )}
+                          <div className="reddit-card-body">
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
+                                <h4 className="fw-medium reddit-text-primary small">{activity.name}</h4>
+                                <p className="reddit-text-secondary small">{activity.description}</p>
+                              </div>
+                              <div className="d-flex align-items-center reddit-text-muted small">
+                                {activity.citations && activity.citations.length > 0 && (
+                                  <span className="d-flex align-items-center text-primary">
+                                    <FaBook className="me-1" />
+                                    <span>{activity.citations.length}</span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>

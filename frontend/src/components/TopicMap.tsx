@@ -269,6 +269,7 @@ const TopicMap = () => {
           <Link to="/comparison" className="reddit-sidebar-link"><FaBook className="me-2" /><span className="label">Comparison</span></Link>
           <Link to="/insights" className="reddit-sidebar-link"><FaChartBar className="me-2" /><span className="label">Insights</span></Link>
           <Link to="/process-generator" className="reddit-sidebar-link"><FaCogs className="me-2" /><span className="label">Process Generator</span></Link>
+          <Link to="/process-designer" className="reddit-sidebar-link"><FaProjectDiagram className="me-2" /><span className="label">Process Designer</span></Link>
           <Link to="/map" className="reddit-sidebar-link active"><FaProjectDiagram className="me-2" /><span className="label">Topic Map</span></Link>
         </div>
       </div>

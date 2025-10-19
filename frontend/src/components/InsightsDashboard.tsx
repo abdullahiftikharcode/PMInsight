@@ -248,6 +248,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean; setIsC
       <Link to="/process-generator" className="reddit-sidebar-link" aria-label="Process Generator">
         <FaCogs className="me-2" /> <span className="label">Process Generator</span>
       </Link>
+      <Link to="/process-designer" className="reddit-sidebar-link" aria-label="Process Designer">
+        <FaProjectDiagram className="me-2" /> <span className="label">Process Designer</span>
+      </Link>
     </div>
 
     <div className="reddit-sidebar-section">

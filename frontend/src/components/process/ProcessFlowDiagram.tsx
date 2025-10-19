@@ -51,11 +51,11 @@ const ProcessFlowDiagram: React.FC<ProcessFlowDiagramProps> = ({
 
   const getScenarioColor = (scenario: string) => {
     const colors = {
-      'custom-software': 'bg-primary',
-      'innovative-product': 'bg-success',
-      'government-project': 'bg-info'
+      'custom-software': 'badge bg-primary',
+      'innovative-product': 'badge bg-success',
+      'government-project': 'badge bg-info'
     };
-    return colors[scenario as keyof typeof colors] || 'bg-secondary';
+    return colors[scenario as keyof typeof colors] || 'badge bg-secondary';
   };
 
   const getScenarioIcon = (scenario: string) => {
@@ -68,10 +68,10 @@ const ProcessFlowDiagram: React.FC<ProcessFlowDiagramProps> = ({
   };
 
   const getStandardColor = (standard: string) => {
-    if (standard.includes('PMBOK')) return 'text-primary';
-    if (standard.includes('PRINCE2')) return 'text-success';
-    if (standard.includes('ISO')) return 'text-info';
-    return 'text-secondary';
+    if (standard.includes('PMBOK')) return 'reddit-text-primary';
+    if (standard.includes('PRINCE2')) return 'reddit-text-success';
+    if (standard.includes('ISO')) return 'reddit-text-info';
+    return 'reddit-text-secondary';
   };
 
   const evidenceSummary = useMemo(() => {
@@ -116,7 +116,7 @@ const ProcessFlowDiagram: React.FC<ProcessFlowDiagramProps> = ({
                 <p className="reddit-text-secondary small mb-0 text-capitalize">{process.scenario.replace('-', ' ')} Process</p>
               </div>
             </div>
-            <span className={`badge ${getScenarioColor(process.scenario)}`}>
+            <span className={getScenarioColor(process.scenario)}>
               {process.scenario.replace('-', ' ').toUpperCase()}
             </span>
           </div>
@@ -127,26 +127,26 @@ const ProcessFlowDiagram: React.FC<ProcessFlowDiagramProps> = ({
           {showEvidence && (
             <div className="row g-3 mb-3">
               <div className="col-6 col-md-3">
-                <div className="text-center p-3 bg-secondary rounded">
-                  <div className="fs-3 fw-bold text-primary">{evidenceSummary.totalCitations}</div>
+                <div className="text-center p-3 reddit-bg-tertiary rounded">
+                  <div className="fs-3 fw-bold reddit-text-primary">{evidenceSummary.totalCitations}</div>
                   <div className="reddit-text-secondary small">Citations</div>
                 </div>
               </div>
               <div className="col-6 col-md-3">
-                <div className="text-center p-3 bg-secondary rounded">
-                  <div className="fs-3 fw-bold text-success">{(evidenceSummary.confidenceScore * 100).toFixed(0)}%</div>
+                <div className="text-center p-3 reddit-bg-tertiary rounded">
+                  <div className="fs-3 fw-bold reddit-text-success">{(evidenceSummary.confidenceScore * 100).toFixed(0)}%</div>
                   <div className="reddit-text-secondary small">Confidence</div>
                 </div>
               </div>
               <div className="col-6 col-md-3">
-                <div className="text-center p-3 bg-secondary rounded">
-                  <div className="fs-3 fw-bold text-info">{(evidenceSummary.qualityScore * 100).toFixed(0)}%</div>
+                <div className="text-center p-3 reddit-bg-tertiary rounded">
+                  <div className="fs-3 fw-bold reddit-text-info">{(evidenceSummary.qualityScore * 100).toFixed(0)}%</div>
                   <div className="reddit-text-secondary small">Quality</div>
                 </div>
               </div>
               <div className="col-6 col-md-3">
-                <div className="text-center p-3 bg-secondary rounded">
-                  <div className="fs-3 fw-bold text-warning">{Object.keys(evidenceSummary.standardsCoverage).length}</div>
+                <div className="text-center p-3 reddit-bg-tertiary rounded">
+                  <div className="fs-3 fw-bold reddit-text-warning">{Object.keys(evidenceSummary.standardsCoverage).length}</div>
                   <div className="reddit-text-secondary small">Standards</div>
                 </div>
               </div>

@@ -17,7 +17,8 @@ import {
   FaChevronRight,
   FaBookmark,
   FaAngleDoubleLeft,
-  FaAngleDoubleRight
+  FaAngleDoubleRight,
+  FaProjectDiagram
 } from 'react-icons/fa';
 
 const SectionDetail = () => {
@@ -179,6 +180,10 @@ const SectionDetail = () => {
           <Link to="/insights" className="reddit-sidebar-link" aria-label="Analytics">
             <FaChartBar className="me-2" />
             <span className="label">Analytics</span>
+          </Link>
+          <Link to="/process-designer" className="reddit-sidebar-link" aria-label="Process Designer">
+            <FaProjectDiagram className="me-2" />
+            <span className="label">Process Designer</span>
           </Link>
           {section.standardId && (
             <Link to={`/standard/${section.standardId}`} className="reddit-sidebar-link" aria-label="Back to Standard">

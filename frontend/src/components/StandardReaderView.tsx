@@ -242,6 +242,10 @@ const StandardReaderView = () => {
             <FaChartBar className="me-2" />
             <span className="label">Analytics</span>
           </Link>
+          <Link to="/process-designer" className={`reddit-sidebar-link${location.pathname.startsWith('/process-designer') ? ' active' : ''}`} aria-label="Process Designer">
+            <FaProjectDiagram className="me-2" />
+            <span className="label">Process Designer</span>
+          </Link>
         </div>
 
         <div className="reddit-sidebar-section">

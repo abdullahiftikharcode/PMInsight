@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaRocket, FaAngleDoubleLeft, FaAngleDoubleRight, FaHome, FaBook, FaChartBar, FaCogs, FaProjectDiagram } from 'react-icons/fa';
 import ProcessDesigner from './ProcessDesigner';
+import LoadingSkeleton from './LoadingSkeleton';
 
 const ProcessDesignerPage = () => {
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
+  const [loading, setLoading] = useState(true);
 
   const toggleSidebar = () => {
     const next = !isCollapsed;
@@ -12,14 +14,26 @@ const ProcessDesignerPage = () => {
     localStorage.setItem('sidebarCollapsed', String(next));
   };
 
+  useEffect(() => {
+    // Simulate loading process designer
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <LoadingSkeleton variant="process" />;
+  }
+
   return (
-    <div className="min-vh-100 bg-animated position-relative">
+    <div className="reddit-layout">
       <div className={`reddit-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="reddit-sidebar-section">
-          <div className="reddit-nav-brand">
+          <Link to="/" className="reddit-nav-brand" style={{textDecoration: 'none'}}>
             <FaRocket className="me-2" />
-            <span className="label">PM Standards</span>
-          </div>
+            <span className="label">PMInsight</span>
+          </Link>
           <button className="sidebar-toggle" onClick={toggleSidebar} title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
             {isCollapsed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
           </button>

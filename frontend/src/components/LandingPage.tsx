@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   FaArrowRight, 
@@ -11,8 +12,23 @@ import {
   FaLightbulb,
   FaEye
 } from 'react-icons/fa';
+import LoadingSkeleton from './LoadingSkeleton';
 
 const LandingPage = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading landing page
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <LoadingSkeleton variant="dashboard" />;
+  }
+
   return (
     <div className="landing-page">
       {/* Navigation */}
@@ -151,18 +167,37 @@ const LandingPage = () => {
             </p>
           </div>
 
-          <div className="feature-card reddit-fade-in" style={{animationDelay: '0.6s'}}>
-            <FaRocket className="feature-icon" />
+          <div className="feature-card reddit-fade-in process-designer-card" style={{animationDelay: '0.6s'}}>
+            <div className="process-designer-header">
+              <div className="process-designer-icon">
+                <FaRocket />
+              </div>
+              <div className="process-designer-badge">NEW</div>
+            </div>
             <h3 className="feature-title">Process Designer</h3>
             <p className="feature-description">
               Generate tailored project processes with evidence-based recommendations and visual process flows.
             </p>
-            <div className="mt-2">
+            <div className="process-designer-features">
+              <div className="feature-item">
+                <span className="feature-dot"></span>
+                <span>AI-Powered Process Generation</span>
+              </div>
+              <div className="feature-item">
+                <span className="feature-dot"></span>
+                <span>Visual Process Flows</span>
+              </div>
+              <div className="feature-item">
+                <span className="feature-dot"></span>
+                <span>Evidence-Based Recommendations</span>
+              </div>
+            </div>
+            <div className="process-designer-actions">
               <Link to="/process-designer" className="btn-reddit-secondary btn-sm me-2">
                 <FaArrowRight className="me-1" />
                 Try Process Designer
               </Link>
-              <Link to="/process-demo" className="btn-reddit-outline btn-sm">
+              <Link to="/process-demo" className="btn-reddit btn-sm">
                 <FaEye className="me-1" />
                 View Demo
               </Link>

@@ -70,13 +70,13 @@ const ScenarioSelector: React.FC<ScenarioSelectorProps> = ({
   const getComplexityColor = (complexity: string) => {
     switch (complexity) {
       case 'low':
-        return 'bg-green-100 text-green-800';
+        return 'badge bg-success';
       case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'badge bg-warning text-dark';
       case 'high':
-        return 'bg-red-100 text-red-800';
+        return 'badge bg-danger';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'badge bg-secondary';
     }
   };
 
@@ -96,30 +96,32 @@ const ScenarioSelector: React.FC<ScenarioSelectorProps> = ({
   if (compact) {
     return (
       <div className="scenario-selector-compact">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="row g-4">
           {scenarios.map((scenario) => (
-            <div
-              key={scenario.id}
-              className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                selectedScenario === scenario.id
-                  ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                  : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-              }`}
-              onClick={() => onScenarioSelect(scenario.id)}
-            >
-              <div className="flex items-center space-x-3 mb-2">
-                <span className="text-2xl">{scenario.icon}</span>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{scenario.name}</h3>
-                  <p className="text-sm text-gray-600">{scenario.description}</p>
+            <div key={scenario.id} className="col-md-4">
+              <div
+                className={`reddit-card scenario-card ${
+                  selectedScenario === scenario.id ? 'selected' : ''
+                }`}
+                onClick={() => onScenarioSelect(scenario.id)}
+                style={{cursor: 'pointer'}}
+              >
+              <div className="reddit-card-body">
+                <div className="d-flex align-items-center mb-2">
+                  <span className="fs-3 me-3">{scenario.icon}</span>
+                  <div>
+                    <h3 className="h6 fw-bold reddit-text-primary mb-1">{scenario.name}</h3>
+                    <p className="reddit-text-secondary small mb-0">{scenario.description}</p>
+                  </div>
+                </div>
+                
+                <div className="d-flex justify-content-between align-items-center">
+                  <span className={`badge ${getComplexityColor(scenario.complexity)}`}>
+                    {getComplexityIcon(scenario.complexity)} {scenario.complexity.toUpperCase()}
+                  </span>
+                  <span className="reddit-text-muted small">{scenario.lifecycle}</span>
                 </div>
               </div>
-              
-              <div className="flex items-center justify-between text-sm">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getComplexityColor(scenario.complexity)}`}>
-                  {getComplexityIcon(scenario.complexity)} {scenario.complexity.toUpperCase()}
-                </span>
-                <span className="text-gray-500">{scenario.lifecycle}</span>
               </div>
             </div>
           ))}
@@ -200,7 +202,7 @@ const ScenarioSelector: React.FC<ScenarioSelectorProps> = ({
                   <h5 className="reddit-text-primary small mb-2">Key Features:</h5>
                   <div className="d-flex flex-wrap gap-1">
                     {scenario.features.map((feature, index) => (
-                      <span key={index} className="badge bg-secondary text-dark small">
+                      <span key={index} className="badge bg-secondary small">
                         {feature}
                       </span>
                     ))}

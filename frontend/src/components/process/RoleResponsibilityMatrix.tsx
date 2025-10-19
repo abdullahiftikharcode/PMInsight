@@ -84,14 +84,14 @@ const RoleResponsibilityMatrix: React.FC<RoleResponsibilityMatrixProps> = ({
 
   const getRoleColor = (role: string) => {
     const colors = [
-      'bg-blue-100 text-blue-800',
-      'bg-green-100 text-green-800',
-      'bg-purple-100 text-purple-800',
-      'bg-orange-100 text-orange-800',
-      'bg-pink-100 text-pink-800',
-      'bg-indigo-100 text-indigo-800',
-      'bg-yellow-100 text-yellow-800',
-      'bg-red-100 text-red-800'
+      'badge bg-primary',
+      'badge bg-success',
+      'badge bg-info',
+      'badge bg-warning text-dark',
+      'badge bg-danger',
+      'badge bg-secondary',
+      'badge bg-dark',
+      'badge bg-light text-dark'
     ];
     const hash = role.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
@@ -119,49 +119,55 @@ const RoleResponsibilityMatrix: React.FC<RoleResponsibilityMatrixProps> = ({
     return (
       <div className="role-responsibility-matrix-compact">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Role Overview</h3>
-          <div className="flex flex-wrap gap-2">
+          <h3 className="h5 fw-bold reddit-text-primary mb-3">Role Overview</h3>
+          <div className="d-flex flex-wrap gap-2">
             {sortedRoleData.map((roleData) => (
-              <div
+              <span
                 key={roleData.role}
-                className={`px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(roleData.role)} cursor-pointer hover:opacity-80 transition-opacity`}
+                className={`badge ${getRoleColor(roleData.role)} cursor-pointer`}
                 onClick={() => handleRoleClick(roleData.role)}
+                style={{cursor: 'pointer'}}
               >
-                <span className="mr-1">{getRoleIcon(roleData.role)}</span>
+                <span className="me-1">{getRoleIcon(roleData.role)}</span>
                 {roleData.role} ({roleData.totalActivities})
-              </div>
+              </span>
             ))}
           </div>
         </div>
         
         {selectedRole && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-3">
-              {getRoleIcon(selectedRole)} {selectedRole} - Activities
-            </h4>
-            <div className="space-y-2">
-              {roleData.find(r => r.role === selectedRole)?.activities.map((activity, index) => (
-                <div
-                  key={index}
-                  className="bg-white rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => onActivityClick?.(activity)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h5 className="font-medium text-gray-900">{activity.name}</h5>
-                      <p className="text-sm text-gray-600">{activity.description}</p>
-                    </div>
-                    <div className="flex items-center space-x-2 text-sm text-gray-500">
-                      {activity.citations && activity.citations.length > 0 && (
-                        <span className="flex items-center space-x-1 text-blue-600">
-                          <FaBook />
-                          <span>{activity.citations.length}</span>
-                        </span>
-                      )}
+          <div className="reddit-card">
+            <div className="reddit-card-body">
+              <h4 className="fw-medium reddit-text-primary mb-3">
+                {getRoleIcon(selectedRole)} {selectedRole} - Activities
+              </h4>
+              <div className="d-flex flex-column gap-2">
+                {roleData.find(r => r.role === selectedRole)?.activities.map((activity, index) => (
+                  <div
+                    key={index}
+                    className="reddit-card cursor-pointer"
+                    onClick={() => onActivityClick?.(activity)}
+                    style={{cursor: 'pointer'}}
+                  >
+                    <div className="reddit-card-body">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                          <h5 className="fw-medium reddit-text-primary">{activity.name}</h5>
+                          <p className="reddit-text-secondary small">{activity.description}</p>
+                        </div>
+                        <div className="d-flex align-items-center gap-2 reddit-text-muted small">
+                          {activity.citations && activity.citations.length > 0 && (
+                            <span className="d-flex align-items-center text-primary">
+                              <FaBook className="me-1" />
+                              <span>{activity.citations.length}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -171,140 +177,152 @@ const RoleResponsibilityMatrix: React.FC<RoleResponsibilityMatrixProps> = ({
 
   return (
     <div className="role-responsibility-matrix">
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-gray-900">Role Responsibility Matrix</h3>
-          <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-600">Sort by:</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="text-sm border border-gray-300 rounded px-2 py-1"
-            >
-              <option value="activities">Activities</option>
-              <option value="evidence">Evidence</option>
-              <option value="alphabetical">Alphabetical</option>
-            </select>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sortedRoleData.map((roleData) => (
-            <div
-              key={roleData.role}
-              className={`bg-white rounded-lg shadow-sm border p-4 cursor-pointer hover:shadow-md transition-shadow ${
-                selectedRole === roleData.role ? 'ring-2 ring-blue-500' : ''
-              }`}
-              onClick={() => handleRoleClick(roleData.role)}
-            >
-              <div className="flex items-center space-x-3 mb-3">
-                <span className="text-2xl">{getRoleIcon(roleData.role)}</span>
-                <div>
-                  <h4 className="font-semibold text-gray-900">{roleData.role}</h4>
-                  <p className="text-sm text-gray-600">{roleData.phases.length} phases</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="flex items-center space-x-2">
-                  <FaTasks className="text-gray-400" />
-                  <span className="text-gray-600">{roleData.totalActivities} activities</span>
-                </div>
-                {showEvidence && (
-                  <div className="flex items-center space-x-2">
-                    <FaBook className="text-blue-500" />
-                    <span className="text-gray-600">{roleData.evidenceCount} citations</span>
-                  </div>
-                )}
-              </div>
-              
-              <div className="mt-3 pt-3 border-t">
-                <div className="flex flex-wrap gap-1">
-                  {roleData.phases.map((phase, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
-                    >
-                      {phase}
-                    </span>
-                  ))}
-                </div>
-              </div>
+      <div className="reddit-card mb-4">
+        <div className="reddit-card-body">
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h3 className="h4 fw-bold reddit-text-primary">Role Responsibility Matrix</h3>
+            <div className="d-flex align-items-center gap-2">
+              <label className="reddit-text-secondary small">Sort by:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="form-select form-select-sm reddit-input"
+                style={{width: 'auto'}}
+              >
+                <option value="activities">Activities</option>
+                <option value="evidence">Evidence</option>
+                <option value="alphabetical">Alphabetical</option>
+              </select>
             </div>
-          ))}
-        </div>
-      </div>
-      
-      {selectedRole && (
-        <div className="bg-gray-50 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-semibold text-gray-900">
-              {getRoleIcon(selectedRole)} {selectedRole} - Detailed Activities
-            </h4>
-            <button
-              onClick={() => setSelectedRole(null)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
           </div>
           
-          <div className="space-y-4">
-            {roleData.find(r => r.role === selectedRole)?.activities.map((activity, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => onActivityClick?.(activity)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h5 className="font-medium text-gray-900 mb-1">{activity.name}</h5>
-                    <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
-                    
-                    {activity.deliverables && activity.deliverables.length > 0 && (
-                      <div className="mb-2">
-                        <span className="text-xs text-gray-500">Deliverables:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {activity.deliverables.map((deliverable, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                              {deliverable}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {showEvidence && activity.citations && activity.citations.length > 0 && (
+          <div className="row g-4">
+            {sortedRoleData.map((roleData) => (
+              <div key={roleData.role} className="col-lg-4 col-md-6">
+                <div
+                  className={`reddit-card cursor-pointer ${
+                    selectedRole === roleData.role ? 'border-primary' : ''
+                  }`}
+                  onClick={() => handleRoleClick(roleData.role)}
+                  style={{cursor: 'pointer'}}
+                >
+                  <div className="reddit-card-body">
+                    <div className="d-flex align-items-center mb-3">
+                      <span className="fs-2 me-3">{getRoleIcon(roleData.role)}</span>
                       <div>
-                        <span className="text-xs text-gray-500">Evidence:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {activity.citations.map((citation, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                              {citation.standard} {citation.section}
-                            </span>
-                          ))}
-                        </div>
+                        <h4 className="fw-bold reddit-text-primary">{roleData.role}</h4>
+                        <p className="reddit-text-secondary small">{roleData.phases.length} phases</p>
                       </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 text-sm text-gray-500 ml-4">
-                    {activity.duration && (
-                      <span className="flex items-center space-x-1">
-                        <FaClock />
-                        <span>{activity.duration}</span>
-                      </span>
-                    )}
-                    {activity.citations && activity.citations.length > 0 && (
-                      <span className="flex items-center space-x-1 text-blue-600">
-                        <FaBook />
-                        <span>{activity.citations.length}</span>
-                      </span>
-                    )}
+                    </div>
+                    
+                    <div className="row g-2 small">
+                      <div className="col-6 d-flex align-items-center">
+                        <FaTasks className="reddit-text-muted me-2" />
+                        <span className="reddit-text-muted">{roleData.totalActivities} activities</span>
+                      </div>
+                      {showEvidence && (
+                        <div className="col-6 d-flex align-items-center">
+                          <FaBook className="text-primary me-2" />
+                          <span className="reddit-text-muted">{roleData.evidenceCount} citations</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="mt-3 pt-3 border-top">
+                      <div className="d-flex flex-wrap gap-1">
+                        {roleData.phases.map((phase, index) => (
+                          <span
+                            key={index}
+                            className="badge bg-secondary small"
+                          >
+                            {phase}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+      
+      {selectedRole && (
+        <div className="reddit-card">
+          <div className="reddit-card-body">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h4 className="h5 fw-bold reddit-text-primary">
+                {getRoleIcon(selectedRole)} {selectedRole} - Detailed Activities
+              </h4>
+              <button
+                onClick={() => setSelectedRole(null)}
+                className="btn btn-outline-secondary btn-sm"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="d-flex flex-column gap-3">
+              {roleData.find(r => r.role === selectedRole)?.activities.map((activity, index) => (
+                <div
+                  key={index}
+                  className="reddit-card cursor-pointer"
+                  onClick={() => onActivityClick?.(activity)}
+                  style={{cursor: 'pointer'}}
+                >
+                  <div className="reddit-card-body">
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div className="flex-grow-1">
+                        <h5 className="fw-medium reddit-text-primary mb-1">{activity.name}</h5>
+                        <p className="reddit-text-secondary small mb-2">{activity.description}</p>
+                        
+                        {activity.deliverables && activity.deliverables.length > 0 && (
+                          <div className="mb-2">
+                            <span className="reddit-text-muted small">Deliverables:</span>
+                            <div className="d-flex flex-wrap gap-1 mt-1">
+                              {activity.deliverables.map((deliverable, idx) => (
+                                <span key={idx} className="badge bg-primary small">
+                                  {deliverable}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {showEvidence && activity.citations && activity.citations.length > 0 && (
+                          <div>
+                            <span className="reddit-text-muted small">Evidence:</span>
+                            <div className="d-flex flex-wrap gap-1 mt-1">
+                              {activity.citations.map((citation, idx) => (
+                                <span key={idx} className="badge bg-success small">
+                                  {citation.standard} {citation.section}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="d-flex align-items-center gap-2 reddit-text-muted small ms-3">
+                        {activity.duration && (
+                          <span className="d-flex align-items-center">
+                            <FaClock className="me-1" />
+                            <span>{activity.duration}</span>
+                          </span>
+                        )}
+                        {activity.citations && activity.citations.length > 0 && (
+                          <span className="d-flex align-items-center text-primary">
+                            <FaBook className="me-1" />
+                            <span>{activity.citations.length}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

@@ -344,6 +344,10 @@ const TutorialPage = () => {
             <FaCogs className="me-2" />
             <span className="label">Process Generator</span>
           </Link>
+          <Link to="/process-designer" className="reddit-sidebar-link" aria-label="Process Designer">
+            <FaProjectDiagram className="me-2" />
+            <span className="label">Process Designer</span>
+          </Link>
           <Link to="/map" className="reddit-sidebar-link" aria-label="Topic Map">
             <FaProjectDiagram className="me-2" />
             <span className="label">Topic Map</span>

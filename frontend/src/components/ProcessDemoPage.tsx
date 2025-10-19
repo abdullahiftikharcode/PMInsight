@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaRocket, FaAngleDoubleLeft, FaAngleDoubleRight, FaHome, FaBook, FaChartBar, FaCogs, FaProjectDiagram, FaEye } from 'react-icons/fa';
 import ProcessFlowDiagram from './process/ProcessFlowDiagram';
@@ -7,6 +7,7 @@ import RoleResponsibilityMatrix from './process/RoleResponsibilityMatrix';
 import DecisionGateFramework from './process/DecisionGateFramework';
 import ProcessComparisonView from './process/ProcessComparisonView';
 import ScenarioSelector from './ScenarioSelector';
+import LoadingSkeleton from './LoadingSkeleton';
 
 // Demo data for showcasing components
 const demoProcess = {
@@ -82,12 +83,21 @@ const demoProcess = {
 const ProcessDemoPage = () => {
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
   const [activeView, setActiveView] = useState<'flow' | 'timeline' | 'matrix' | 'gates' | 'comparison' | 'scenario'>('flow');
+  const [loading, setLoading] = useState(true);
 
   const toggleSidebar = () => {
     const next = !isCollapsed;
     setIsCollapsed(next);
     localStorage.setItem('sidebarCollapsed', String(next));
   };
+
+  useEffect(() => {
+    // Simulate loading demo data
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const renderActiveView = () => {
     switch (activeView) {
@@ -108,14 +118,18 @@ const ProcessDemoPage = () => {
     }
   };
 
+  if (loading) {
+    return <LoadingSkeleton variant="process" />;
+  }
+
   return (
-    <div className="min-vh-100 bg-animated position-relative">
+    <div className="reddit-layout">
       <div className={`reddit-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="reddit-sidebar-section">
-          <div className="reddit-nav-brand">
+          <Link to="/" className="reddit-nav-brand" style={{textDecoration: 'none'}}>
             <FaRocket className="me-2" />
-            <span className="label">PM Standards</span>
-          </div>
+            <span className="label">PMInsight</span>
+          </Link>
           <button className="sidebar-toggle" onClick={toggleSidebar} title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
             {isCollapsed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
           </button>
@@ -137,6 +151,7 @@ const ProcessDemoPage = () => {
           <button 
             className={`reddit-sidebar-link ${activeView === 'flow' ? 'active' : ''}`}
             onClick={() => setActiveView('flow')}
+            aria-label="Process Flow Diagram"
           >
             <FaProjectDiagram className="me-2" />
             <span className="label">Process Flow</span>
@@ -144,6 +159,7 @@ const ProcessDemoPage = () => {
           <button 
             className={`reddit-sidebar-link ${activeView === 'timeline' ? 'active' : ''}`}
             onClick={() => setActiveView('timeline')}
+            aria-label="Phase Timeline"
           >
             <FaChartBar className="me-2" />
             <span className="label">Timeline</span>
@@ -151,6 +167,7 @@ const ProcessDemoPage = () => {
           <button 
             className={`reddit-sidebar-link ${activeView === 'matrix' ? 'active' : ''}`}
             onClick={() => setActiveView('matrix')}
+            aria-label="Role Responsibility Matrix"
           >
             <FaBook className="me-2" />
             <span className="label">Role Matrix</span>
@@ -158,6 +175,7 @@ const ProcessDemoPage = () => {
           <button 
             className={`reddit-sidebar-link ${activeView === 'gates' ? 'active' : ''}`}
             onClick={() => setActiveView('gates')}
+            aria-label="Decision Gate Framework"
           >
             <FaCogs className="me-2" />
             <span className="label">Decision Gates</span>
@@ -165,6 +183,7 @@ const ProcessDemoPage = () => {
           <button 
             className={`reddit-sidebar-link ${activeView === 'comparison' ? 'active' : ''}`}
             onClick={() => setActiveView('comparison')}
+            aria-label="Process Comparison"
           >
             <FaEye className="me-2" />
             <span className="label">Comparison</span>
@@ -172,6 +191,7 @@ const ProcessDemoPage = () => {
           <button 
             className={`reddit-sidebar-link ${activeView === 'scenario' ? 'active' : ''}`}
             onClick={() => setActiveView('scenario')}
+            aria-label="Scenario Selector"
           >
             <FaRocket className="me-2" />
             <span className="label">Scenario Selector</span>
@@ -180,16 +200,16 @@ const ProcessDemoPage = () => {
       </div>
 
       <div className={`reddit-main ${isCollapsed ? 'collapsed' : ''}`}>
-        <div className="reddit-content">
-          <div className="reddit-card mb-4">
-            <div className="reddit-card-body">
-              <h1 className="display-6 fw-bold reddit-text-primary mb-2">
-                <FaProjectDiagram className="me-2" /> Phase 2B Demo
-              </h1>
-              <p className="reddit-text-secondary mb-0">Interactive demonstration of enhanced process visualization components.</p>
-            </div>
+        <div className="demo-page-header">
+          <div className="container">
+            <h1 className="display-6 fw-bold">
+              <FaProjectDiagram className="me-2" /> Phase 2B Demo
+            </h1>
+            <p>Interactive demonstration of enhanced process visualization components.</p>
           </div>
-
+        </div>
+        
+        <div className="reddit-content">
           {renderActiveView()}
         </div>
       </div>

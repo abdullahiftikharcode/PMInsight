@@ -650,6 +650,11 @@
   margin-bottom: var(--space-xs);
   position: relative;
   overflow: hidden;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
 }
 
 .reddit-sidebar-link::before {
@@ -677,6 +682,23 @@
   background: linear-gradient(135deg, var(--reddit-orange) 0%, var(--reddit-orange-light) 100%);
   color: var(--text-inverse);
   box-shadow: var(--shadow-sm);
+}
+
+/* Ensure sidebar buttons don't inherit white backgrounds */
+.reddit-sidebar button.reddit-sidebar-link {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  border: none !important;
+}
+
+.reddit-sidebar button.reddit-sidebar-link:hover {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+.reddit-sidebar button.reddit-sidebar-link.active {
+  background: linear-gradient(135deg, var(--reddit-orange) 0%, var(--reddit-orange-light) 100%) !important;
+  color: var(--text-inverse) !important;
 }
 
 /* Reddit-Style Search */
@@ -984,6 +1006,47 @@
     margin-bottom: var(--space-md);
     line-height: 1.5;
   }
+  
+  /* Demo page mobile improvements */
+  .demo-page-header h1 {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .demo-page-header p {
+    font-size: var(--font-size-sm);
+  }
+  
+  /* Process flow diagram mobile fixes */
+  .process-flow-diagram .reddit-card-body {
+    padding: var(--space-md);
+  }
+  
+  .process-flow-diagram .row.g-3 {
+    margin: 0;
+  }
+  
+  .process-flow-diagram .col-6,
+  .process-flow-diagram .col-md-3 {
+    margin-bottom: var(--space-sm);
+  }
+  
+  /* Scenario selector mobile improvements */
+  .scenario-selector .row.g-4 {
+    margin: 0;
+  }
+  
+  .scenario-selector .col-lg-4 {
+    margin-bottom: var(--space-md);
+  }
+  
+  /* Standard reader mobile fixes */
+  .reddit-content .row.g-4 {
+    margin: 0;
+  }
+  
+  .reddit-content .col-12 {
+    margin-bottom: var(--space-md);
+  }
 }
 
 /* Animations */
@@ -1098,6 +1161,69 @@
 .form-control:focus, .form-select:focus, input:focus, textarea:focus, select:focus {
   color: var(--text-primary) !important;
   background-color: var(--bg-quaternary) !important;
+  border-color: var(--reddit-orange) !important;
+}
+
+/* Fix white buttons in sidebars and demo pages */
+.btn, .btn-sm, .btn-lg, .btn-outline-secondary, .btn-outline-primary, .btn-secondary, .btn-link {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-medium) !important;
+}
+
+.btn:hover, .btn-sm:hover, .btn-lg:hover {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-quaternary) !important;
+  border-color: var(--border-dark) !important;
+}
+
+.btn-outline-secondary {
+  color: var(--text-secondary) !important;
+  background-color: transparent !important;
+  border-color: var(--border-medium) !important;
+}
+
+.btn-outline-secondary:hover {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--reddit-orange) !important;
+}
+
+.btn-link {
+  color: var(--reddit-orange) !important;
+  background-color: transparent !important;
+  border: none !important;
+  text-decoration: none !important;
+}
+
+.btn-link:hover {
+  color: var(--reddit-orange-light) !important;
+  background-color: transparent !important;
+  text-decoration: underline !important;
+}
+
+/* Ensure sidebar buttons follow theme */
+.reddit-sidebar .btn, .reddit-sidebar .btn-sm, .reddit-sidebar .btn-outline-secondary {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-medium) !important;
+}
+
+.reddit-sidebar .btn:hover, .reddit-sidebar .btn-sm:hover {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-quaternary) !important;
+  border-color: var(--reddit-orange) !important;
+}
+
+.reddit-sidebar .btn-outline-secondary {
+  color: var(--text-secondary) !important;
+  background-color: transparent !important;
+  border-color: var(--border-medium) !important;
+}
+
+.reddit-sidebar .btn-outline-secondary:hover {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-tertiary) !important;
   border-color: var(--reddit-orange) !important;
 }
 
@@ -1585,9 +1711,10 @@ input, textarea, select { color-scheme: dark; }
 }
 
 .reddit-modal {
-  background: var(--reddit-bg);
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
   max-width: 90vw;
   max-height: 90vh;
   width: 100%;
@@ -1598,8 +1725,9 @@ input, textarea, select { color-scheme: dark; }
 }
 
 .reddit-modal-header {
-  padding: 20px;
-  border-bottom: 1px solid var(--reddit-border);
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border-light);
+  background-color: var(--bg-tertiary);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1616,7 +1744,332 @@ input, textarea, select { color-scheme: dark; }
 }
 
 .reddit-modal-body {
-  padding: 20px;
+  padding: var(--space-lg);
   overflow-y: auto;
   flex-grow: 1;
+  background-color: var(--bg-secondary);
+}
+
+/* Demo Page Enhancements */
+.demo-page-header {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border-bottom: 1px solid var(--border-light);
+  padding: var(--space-lg) 0;
+  margin-bottom: var(--space-lg);
+}
+
+.demo-page-header h1 {
+  color: var(--text-primary);
+  font-weight: 800;
+  margin-bottom: var(--space-sm);
+}
+
+.demo-page-header p {
+  color: var(--text-secondary);
+  margin-bottom: 0;
+}
+
+/* Process Demo Specific Styles */
+.process-demo-container {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+.process-demo-content {
+  padding: var(--space-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Enhanced Card Styling for Demo Pages */
+.demo-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.demo-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-medium);
+  transform: translateY(-2px);
+}
+
+.demo-card-header {
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-light);
+  padding: var(--space-lg);
+}
+
+.demo-card-body {
+  padding: var(--space-lg);
+  background: var(--bg-secondary);
+}
+
+/* Progress Bar Theme Fixes */
+.progress {
+  background-color: var(--bg-tertiary) !important;
+  border-radius: var(--radius-full) !important;
+}
+
+.progress-bar {
+  background-color: var(--reddit-orange) !important;
+  border-radius: var(--radius-full) !important;
+}
+
+.progress-bar.bg-primary {
+  background-color: var(--reddit-orange) !important;
+}
+
+.progress-bar.bg-success {
+  background-color: #10b981 !important;
+}
+
+.progress-bar.bg-info {
+  background-color: var(--reddit-blue) !important;
+}
+
+.progress-bar.bg-warning {
+  background-color: #f59e0b !important;
+}
+
+.progress-bar.bg-danger {
+  background-color: #ef4444 !important;
+}
+
+.progress-bar.bg-secondary {
+  background-color: var(--text-muted) !important;
+}
+
+/* Fix white backgrounds in demo components */
+.process-flow-diagram,
+.role-responsibility-matrix,
+.decision-gate-framework,
+.process-comparison {
+  background-color: transparent !important;
+}
+
+.process-flow-diagram .reddit-card,
+.role-responsibility-matrix .reddit-card,
+.decision-gate-framework .reddit-card,
+.process-comparison .reddit-card {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-medium) !important;
+}
+
+/* Ensure all demo components follow theme */
+.process-flow-diagram .bg-secondary,
+.role-responsibility-matrix .bg-secondary,
+.decision-gate-framework .bg-secondary,
+.process-comparison .bg-secondary {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Fix any remaining white backgrounds */
+.reddit-card-body {
+  background-color: var(--bg-secondary) !important;
+}
+
+.reddit-card {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-medium) !important;
+}
+
+/* Responsive improvements for demo pages */
+@media (max-width: 768px) {
+  .process-demo-content {
+    padding: var(--space-md);
+  }
+  
+  .demo-card-header,
+  .demo-card-body {
+    padding: var(--space-md);
+  }
+  
+  .reddit-modal {
+    margin: var(--space-md);
+    max-width: calc(100vw - 2rem);
+  }
+  
+  .reddit-modal-header,
+  .reddit-modal-body {
+    padding: var(--space-md);
+  }
+  
+  /* Timeline responsive fixes */
+  .phase-timeline-horizontal .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+  
+  .phase-timeline-horizontal .position-absolute {
+    display: none;
+  }
+  
+  .phase-timeline-horizontal > div > div {
+    width: 100% !important;
+  }
+  
+  /* Mobile-specific demo improvements */
+  .process-flow-diagram .row,
+  .role-responsibility-matrix .row,
+  .decision-gate-framework .row,
+  .process-comparison .row {
+    margin: 0;
+  }
+  
+  .process-flow-diagram .col-lg-4,
+  .process-flow-diagram .col-lg-6,
+  .role-responsibility-matrix .col-lg-4,
+  .role-responsibility-matrix .col-md-6,
+  .decision-gate-framework .col-lg-6,
+  .process-comparison .col-lg-6 {
+    padding: var(--space-sm);
+  }
+  
+  /* Mobile demo card improvements */
+  .demo-card {
+    margin-bottom: var(--space-md);
+  }
+  
+  .demo-card-header,
+  .demo-card-body {
+    padding: var(--space-md);
+  }
+}
+
+/* Enhanced Process Designer Card */
+.process-designer-card {
+  position: relative;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border: 2px solid var(--reddit-orange);
+  box-shadow: 0 8px 32px rgba(255, 69, 0, 0.2);
+  transform: scale(1.02);
+  z-index: 2;
+}
+
+.process-designer-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 69, 0, 0.1) 0%, rgba(255, 69, 0, 0.05) 100%);
+  border-radius: inherit;
+  z-index: -1;
+}
+
+.process-designer-header {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-md);
+}
+
+.process-designer-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--reddit-orange) 0%, #ff6b35 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  box-shadow: 0 4px 16px rgba(255, 69, 0, 0.3);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(255, 69, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 24px rgba(255, 69, 0, 0.5);
+  }
+}
+
+.process-designer-badge {
+  background: linear-gradient(135deg, #ff6b35 0%, var(--reddit-orange) 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(255, 69, 0, 0.3);
+}
+
+.process-designer-features {
+  margin: var(--space-lg) 0;
+  padding: var(--space-md);
+  background: rgba(255, 69, 0, 0.05);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 69, 0, 0.1);
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.feature-item:last-child {
+  margin-bottom: 0;
+}
+
+.feature-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--reddit-orange);
+  border-radius: 50%;
+  margin-right: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.process-designer-actions {
+  margin-top: var(--space-lg);
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/* Process Flow Diagram Card Alignment Fixes */
+.process-flow-diagram .reddit-card-body {
+  padding: var(--space-lg);
+}
+
+.process-flow-diagram .row.g-3 {
+  margin: 0;
+}
+
+.process-flow-diagram .col-6,
+.process-flow-diagram .col-md-3 {
+  margin-bottom: var(--space-sm);
+}
+
+.process-flow-diagram .text-center.p-3 {
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.process-flow-diagram .fs-3 {
+  line-height: 1.2;
+  margin-bottom: var(--space-xs);
+}
+
+.process-flow-diagram .small {
+  font-size: 0.8rem;
+  opacity: 0.8;
 }

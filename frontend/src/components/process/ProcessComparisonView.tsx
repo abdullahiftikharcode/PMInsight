@@ -42,9 +42,11 @@ const ProcessComparisonView: React.FC<ProcessComparisonViewProps> = ({
   if (processes.length === 0) {
     return (
       <div className="process-comparison">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Process Comparison</h3>
-          <p className="text-gray-600">No processes available for comparison.</p>
+        <div className="reddit-card">
+          <div className="reddit-card-body">
+            <h3 className="h5 fw-bold reddit-text-primary mb-2">Process Comparison</h3>
+            <p className="reddit-text-secondary">No processes available for comparison.</p>
+          </div>
         </div>
       </div>
     );
@@ -54,55 +56,71 @@ const ProcessComparisonView: React.FC<ProcessComparisonViewProps> = ({
     const process = processes[0];
     return (
       <div className="process-comparison">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Process Details</h3>
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <span className="text-2xl">{getScenarioIcon(process.scenario)}</span>
+        <div className="reddit-card">
+          <div className="reddit-card-body">
+            <h3 className="h5 fw-bold reddit-text-primary mb-3">Process Details</h3>
+            <div className="d-flex align-items-center gap-3 mb-4">
+              <span className="fs-2">{getScenarioIcon(process.scenario)}</span>
               <div>
-                <h4 className="text-xl font-semibold text-gray-900">{process.name}</h4>
-                <p className="text-sm text-gray-600 capitalize">{process.scenario.replace('-', ' ')}</p>
+                <h4 className="h4 fw-bold reddit-text-primary">{process.name}</h4>
+                <p className="reddit-text-secondary small text-capitalize">{process.scenario.replace('-', ' ')}</p>
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <FaTasks className="text-blue-600" />
-                  <span className="font-medium text-blue-900">Phases</span>
+            <div className="row g-3 mb-4">
+              <div className="col-md-4">
+                <div className="reddit-card">
+                  <div className="reddit-card-body text-center">
+                    <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                      <FaTasks className="text-primary" />
+                      <span className="fw-medium reddit-text-primary">Phases</span>
+                    </div>
+                    <p className="fs-2 fw-bold text-primary mb-0">{process.phases.length}</p>
+                  </div>
                 </div>
-                <p className="text-2xl font-bold text-blue-900 mt-1">{process.phases.length}</p>
               </div>
               
-              <div className="bg-green-50 p-4 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <FaBook className="text-green-600" />
-                  <span className="font-medium text-green-900">Citations</span>
+              <div className="col-md-4">
+                <div className="reddit-card">
+                  <div className="reddit-card-body text-center">
+                    <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                      <FaBook className="text-success" />
+                      <span className="fw-medium reddit-text-primary">Citations</span>
+                    </div>
+                    <p className="fs-2 fw-bold text-success mb-0">{process.evidence.totalCitations}</p>
+                  </div>
                 </div>
-                <p className="text-2xl font-bold text-green-900 mt-1">{process.evidence.totalCitations}</p>
               </div>
               
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <FaUsers className="text-purple-600" />
-                  <span className="font-medium text-purple-900">Confidence</span>
+              <div className="col-md-4">
+                <div className="reddit-card">
+                  <div className="reddit-card-body text-center">
+                    <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+                      <FaUsers className="text-info" />
+                      <span className="fw-medium reddit-text-primary">Confidence</span>
+                    </div>
+                    <p className="fs-2 fw-bold text-info mb-0">
+                      {Math.round(process.evidence.confidenceScore * 100)}%
+                    </p>
+                  </div>
                 </div>
-                <p className="text-2xl font-bold text-purple-900 mt-1">
-                  {Math.round(process.evidence.confidenceScore * 100)}%
-                </p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h5 className="font-semibold text-gray-900">Process Phases:</h5>
-              {process.phases.map((phase, index) => (
-                <div key={index} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <h6 className="font-medium text-gray-900">{phase.name}</h6>
-                    <span className="text-sm text-gray-600">{phase.activities?.length || 0} activities</span>
+            <div>
+              <h5 className="fw-bold reddit-text-primary mb-3">Process Phases:</h5>
+              <div className="d-flex flex-column gap-3">
+                {process.phases.map((phase, index) => (
+                  <div key={index} className="reddit-card">
+                    <div className="reddit-card-body">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <h6 className="fw-medium reddit-text-primary">{phase.name}</h6>
+                        <span className="reddit-text-secondary small">{phase.activities?.length || 0} activities</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -121,71 +139,81 @@ const ProcessComparisonView: React.FC<ProcessComparisonViewProps> = ({
 
   return (
     <div className="process-comparison">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Process Comparison</h3>
-        <p className="text-gray-600">Comparing {processes.length} processes</p>
+      <div className="reddit-card mb-4">
+        <div className="reddit-card-body">
+          <h3 className="h5 fw-bold reddit-text-primary mb-2">Process Comparison</h3>
+          <p className="reddit-text-secondary">Comparing {processes.length} processes</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="row g-4 mb-4">
         {processes.map((process, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <span className="text-2xl">{getScenarioIcon(process.scenario)}</span>
-              <div>
-                <h4 className="text-xl font-semibold text-gray-900">{process.name}</h4>
-                <p className="text-sm text-gray-600 capitalize">{process.scenario.replace('-', ' ')}</p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{process.phases.length}</div>
-                <div className="text-sm text-gray-600">Phases</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{process.evidence.totalCitations}</div>
-                <div className="text-sm text-gray-600">Citations</div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h6 className="font-medium text-gray-900">Phases:</h6>
-              {process.phases.map((phase, phaseIndex) => (
-                <div key={phaseIndex} className="text-sm text-gray-600">
-                  • {phase.name}
+          <div key={index} className="col-lg-6">
+            <div className="reddit-card">
+              <div className="reddit-card-body">
+                <div className="d-flex align-items-center gap-3 mb-4">
+                  <span className="fs-2">{getScenarioIcon(process.scenario)}</span>
+                  <div>
+                    <h4 className="h5 fw-bold reddit-text-primary">{process.name}</h4>
+                    <p className="reddit-text-secondary small text-capitalize">{process.scenario.replace('-', ' ')}</p>
+                  </div>
                 </div>
-              ))}
+                
+                <div className="row g-3 mb-4">
+                  <div className="col-6 text-center">
+                    <div className="fs-2 fw-bold text-primary">{process.phases.length}</div>
+                    <div className="reddit-text-secondary small">Phases</div>
+                  </div>
+                  <div className="col-6 text-center">
+                    <div className="fs-2 fw-bold text-success">{process.evidence.totalCitations}</div>
+                    <div className="reddit-text-secondary small">Citations</div>
+                  </div>
+                </div>
+
+                <div>
+                  <h6 className="fw-medium reddit-text-primary mb-2">Phases:</h6>
+                  <div className="d-flex flex-column gap-1">
+                    {process.phases.map((phase, phaseIndex) => (
+                      <div key={phaseIndex} className="reddit-text-secondary small">
+                        • {phase.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Comparison Summary</h4>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h5 className="font-medium text-gray-900 mb-2">Common Phases ({commonPhases.length})</h5>
-            <div className="space-y-1">
-              {commonPhases.map((phase, index) => (
-                <div key={index} className="text-sm text-green-600">✓ {phase}</div>
-              ))}
-            </div>
-          </div>
+      <div className="reddit-card">
+        <div className="reddit-card-body">
+          <h4 className="h5 fw-bold reddit-text-primary mb-4">Comparison Summary</h4>
           
-          <div>
-            <h5 className="font-medium text-gray-900 mb-2">Unique Phases</h5>
-            <div className="space-y-1">
-              {processes.map((process, index) => {
-                const uniquePhases = process.phases.filter(phase =>
-                  !commonPhases.includes(phase.name)
-                );
-                return uniquePhases.length > 0 ? (
-                  <div key={index} className="text-sm text-gray-600">
-                    <strong>{process.name}:</strong> {uniquePhases.map(p => p.name).join(', ')}
-                  </div>
-                ) : null;
-              })}
+          <div className="row g-4">
+            <div className="col-md-6">
+              <h5 className="fw-medium reddit-text-primary mb-3">Common Phases ({commonPhases.length})</h5>
+              <div className="d-flex flex-column gap-1">
+                {commonPhases.map((phase, index) => (
+                  <div key={index} className="reddit-text-success small">✓ {phase}</div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="col-md-6">
+              <h5 className="fw-medium reddit-text-primary mb-3">Unique Phases</h5>
+              <div className="d-flex flex-column gap-1">
+                {processes.map((process, index) => {
+                  const uniquePhases = process.phases.filter(phase =>
+                    !commonPhases.includes(phase.name)
+                  );
+                  return uniquePhases.length > 0 ? (
+                    <div key={index} className="reddit-text-secondary small">
+                      <strong>{process.name}:</strong> {uniquePhases.map(p => p.name).join(', ')}
+                    </div>
+                  ) : null;
+                })}
+              </div>
             </div>
           </div>
         </div>

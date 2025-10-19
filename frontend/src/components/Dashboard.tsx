@@ -153,7 +153,7 @@ const Dashboard = () => {
             <span className="label">Tutorial</span>
           </Link>
           <Link to="/process-designer" className="reddit-sidebar-link">
-            <FaCog className="me-2" />
+            <FaProjectDiagram className="me-2" />
             <span className="label">Process Designer</span>
           </Link>
         </div>

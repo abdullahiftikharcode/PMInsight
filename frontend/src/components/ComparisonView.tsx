@@ -14,6 +14,7 @@ import {
   FaExclamationTriangle as FaWarning,
   FaProjectDiagram
 } from 'react-icons/fa';
+import LoadingSkeleton from './LoadingSkeleton';
 
 const ComparisonView = () => {
   const { topicId } = useParams<{ topicId: string }>();
@@ -21,6 +22,7 @@ const ComparisonView = () => {
   const [comparison, setComparison] = useState<ComparisonResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
   
   // Check if this is a custom topic comparison
@@ -290,10 +292,14 @@ const ComparisonView = () => {
             <FaChartBar className="me-2" />
             <span className="label">Insights</span>
           </Link>
-          <Link to="/comparison" className="reddit-sidebar-link active">
-            <FaBook className="me-2" />
-            <span className="label">Comparison</span>
-          </Link>
+           <Link to="/comparison" className="reddit-sidebar-link active">
+             <FaBook className="me-2" />
+             <span className="label">Comparison</span>
+           </Link>
+           <Link to="/process-designer" className="reddit-sidebar-link">
+             <FaProjectDiagram className="me-2" />
+             <span className="label">Process Designer</span>
+           </Link>
           <Link to="/map" className="reddit-sidebar-link">
             <FaProjectDiagram className="me-2" />
             <span className="label">Topic Map</span>
